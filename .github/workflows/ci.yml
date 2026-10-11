@@ -21,6 +21,12 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - name: Licence file is present
+        run: test -s LICENSE
+      - name: No personal data in tracked files
+        run: bash scripts/check-no-personal-data.sh
+        env:
+          OTS_PERSONAL_TERMS: ${{ secrets.OTS_PERSONAL_TERMS }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck

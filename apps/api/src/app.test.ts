@@ -39,7 +39,12 @@ describe('GET /docs/json', () => {
     expect(res.status).toBe(200);
     expect(res.body.openapi).toMatch(/^3\./);
     expect(Object.keys(res.body.paths)).toEqual(
-      expect.arrayContaining(['/setup/status', '/events/{id}', '/checkins/{date}', '/health']),
+      expect.arrayContaining([
+        '/api/setup/status',
+        '/api/events/{id}',
+        '/api/checkins/{date}',
+        '/api/health',
+      ]),
     );
   });
 });
@@ -53,7 +58,13 @@ describe('unknown routes', () => {
 
 describe('readConfig', () => {
   it('defaults to 0.0.0.0:3001', () => {
-    expect(readConfig({})).toEqual({ host: '0.0.0.0', port: 3001, logLevel: 'info' });
+    expect(readConfig({})).toEqual({
+      host: '0.0.0.0',
+      port: 3001,
+      logLevel: 'info',
+      lanGuard: true,
+      logDir: null,
+    });
   });
 
   it.each(['abc', '0', '70000', '30.5'])('rejects port %s', (port) => {

@@ -874,6 +874,43 @@ p.rest-timer {
   font-size: 0.85rem;
 }
 
+/* Blocks and rules */
+
+.block-row {
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+textarea.rules-input {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  white-space: pre;
+  overflow: auto;
+}
+
+pre.diff {
+  white-space: pre-wrap;
+}
+
+.diff-added {
+  color: var(--done);
+}
+
+.diff-removed {
+  color: var(--error);
+}
+
+.dry-run ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.dry-run ul.plain {
+  padding-left: 0;
+}
+
 /* Bottom tab bar */
 
 .tabbar {

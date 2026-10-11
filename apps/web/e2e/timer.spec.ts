@@ -4,7 +4,7 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
 // fast-forwarded (the same thing a locked phone does to a page: no ticks, then
 // a jump), and the rest timer demo is run second by second.
 
-const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}`;
+const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}/api`;
 const WEDNESDAY_7AM = new Date(Date.UTC(2031, 0, 8, 7, 0, 0));
 
 /** Makes sure setup is done and the synthetic week exists, whatever ran before. */

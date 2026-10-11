@@ -7,7 +7,7 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Garmin via `python-garminconnect` 0.3.x, treated as a best-effort feed. Garmin offers no personal API; the March 2026 auth change killed `garth`, so isolate the risk in its own process and fail closed.
 - 2026-10-11: No service worker or PWA install in v1. LAN http is not a secure context; bookmark is enough.
 - 2026-10-11: Progression rules stored as JSON on the block, interpreted by a pure engine with table tests. Tuning without deploying.
-- 2026-10-11: Race date is a placeholder (2027-09-25) flagged unconfirmed until the event is chosen.
+- 2026-10-11: The race date is entered at setup and flagged unconfirmed until the event is chosen.
 - 2026-10-11: v0.2. No injury gating anywhere; the app records and shows, the user judges. Progression is calendar-driven and editable.
 - 2026-10-11: Runs are recorded on the watch. The app timer covers vest walks and strength rest only.
 - 2026-10-11: Sunday sessions are optional by rule: done is a bonus, missed never fails the week. Compliance is weekday-based.
@@ -65,3 +65,12 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 9. "Main lifts" are slots on the linear rule; the chart shows the two with the most history. A substitute set counts under the exercise actually done.
 - 2026-10-11: Stage 9. The review card compares the current ISO week with the one before using fixed sentences and no judgement words.
 - 2026-10-11: Stage 9. Request bodies are no longer type-coerced (only query strings and path parameters are), because coercion turned a real 0 into null in nullable fields.
+- 2026-10-11: Stage 10. Every api route is under `/api` in every mode, dev included; the dev proxy no longer rewrites paths. `/health` is now `/api/health`.
+- 2026-10-11: Stage 10. The LAN guard allows loopback and RFC 1918 addresses plus their IPv6 counterparts (`::1`, unique local, link-local). Carrier-grade NAT and 169.254 addresses are refused. `OTS_LAN_GUARD` must be exactly `true` or `false`; anything else stops the api from starting so a typo cannot switch the guard off.
+- 2026-10-11: Stage 10. Backups run on start and when the clock passes 02:00 (checked each minute); a start after 02:00 counts as that night's. Only files named `ots-YYYYMMDD-HHmm.db` are pruned.
+- 2026-10-11: Stage 10. The Garmin sync task is only registered with `-IncludeGarmin`, because the sidecar was not built. All three PowerShell scripts support `-WhatIf` or `-Force` so they can be checked without changing the PC.
+- 2026-10-11: Stage 10. Reordering blocks lays them back to back from the earliest start, each keeping its length. Creating or editing a block that overlaps another is refused with 409.
+- 2026-10-11: Stage 10. A dry run uses the same engine as generation with nothing written, and accepts unsaved rules so the editor can try them first.
+- 2026-10-11: Stage 10. The rolling log file goes in `<data folder>/logs` unless `OTS_LOG_DIR` is set.
+- 2026-10-11: Stage 10. The personal-data check skips `LICENSE`, where the copyright holder's name belongs, and can take its terms from a CI secret (`OTS_PERSONAL_TERMS`) as well as the local `.personal-terms` file.
+- 2026-10-11: Stage 10. A systemd user unit is provided for Linux alongside the Windows scripts.

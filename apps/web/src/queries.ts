@@ -10,6 +10,7 @@ import type {
   Fixture,
   GeneratedWeek,
   Habit,
+  Health,
   Metric,
   ProgrammeDay,
   SessionTemplate,
@@ -25,6 +26,7 @@ import { ApiError, api } from './api.js';
 
 export const keys = {
   setup: ['setup'] as const,
+  health: ['health'] as const,
   athlete: ['athlete'] as const,
   events: ['events'] as const,
   equipment: ['equipment'] as const,
@@ -44,6 +46,9 @@ export const keys = {
 
 export const useSetupStatus = () =>
   useQuery({ queryKey: keys.setup, queryFn: () => api<SetupStatus>('GET', '/setup/status') });
+
+export const useHealth = () =>
+  useQuery({ queryKey: keys.health, queryFn: () => api<Health>('GET', '/health') });
 
 export const useAthlete = () =>
   useQuery({

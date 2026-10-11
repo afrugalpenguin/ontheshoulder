@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { FastifyInstance, InjectOptions } from 'fastify';
-import { buildApp } from '../app.js';
+import { API_PREFIX, buildApp } from '../app.js';
 
 export interface TestApp {
   app: FastifyInstance;
@@ -26,7 +26,8 @@ export async function makeApp(): Promise<TestApp> {
     call: async <T>(method: InjectOptions['method'], url: string, body?: unknown) => {
       const res = await app.inject({
         method,
-        url,
+        // Tests name api paths without the prefix every route is mounted under.
+        url: `${API_PREFIX}${url}`,
         ...(body === undefined ? {} : { payload: body as object }),
       });
       const text = res.body;

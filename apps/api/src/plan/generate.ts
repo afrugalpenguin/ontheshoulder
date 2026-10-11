@@ -5,6 +5,7 @@ import {
   validateRules,
   type GeneratedWeek,
   type ProgressionRules,
+  type WeekSession,
 } from '@ots/shared';
 import { and, eq, gte, inArray, lte } from 'drizzle-orm';
 import type { Db } from '../db/client.js';
@@ -51,7 +52,7 @@ function weekSessions(db: Db, isoWeek: string) {
 export function generateWeekPlan(
   db: Db,
   isoWeek: string,
-  options: { force?: boolean } = {},
+  options: { force?: boolean; persist?: boolean; rules?: ProgressionRules } = {},
 ): GeneratedWeek {
   const start = isoWeekStart(isoWeek);
   const existing = weekSessions(db, isoWeek);
@@ -62,7 +63,7 @@ export function generateWeekPlan(
   }
 
   const covering = rulesForDate(db, start);
-  const { rules } = covering;
+  const rules = options.rules ?? covering.rules;
   const fixtures = db
     .select({ fixture, template: session_template })
     .from(fixture)
@@ -93,6 +94,41 @@ export function generateWeekPlan(
     removed: result.remove.length,
   };
 
+  if (options.persist === false) {
+    // Dry run: describe the week the engine would produce and write nothing.
+    const templates = new Map(fixtures.map((f) => [f.template.id, f.template]));
+    const current = loadWeek(db, isoWeek);
+    const planned = [...result.create, ...result.update].map((s, index): WeekSession => {
+      const template = templates.get(s.template_id);
+      if (!template) throw new Error(`fixture template ${s.template_id} is missing`);
+      return {
+        id: 'id' in s ? (s.id as number) : -(index + 1),
+        week_plan_id: 0,
+        date: s.date,
+        template_id: s.template_id,
+        slot: s.slot,
+        targets: s.targets,
+        optional: s.optional,
+        status: 'planned' as const,
+        skip_reason: null,
+        edited_by_user: false,
+        linked_activity_id: null,
+        template: {
+          key: template.key,
+          kind: template.kind,
+          name: template.name,
+          structure: template.structure,
+          programme_day_id: template.programme_day_id,
+        },
+      };
+    });
+    const kept = current.sessions.filter((s) => result.keep.includes(s.id));
+    const sessions = [...planned, ...kept].sort(
+      (a, b) => a.date.localeCompare(b.date) || a.slot.localeCompare(b.slot),
+    );
+    return { persisted: false, week: { ...current, reasoning, sessions }, changes };
+  }
+
   db.transaction((tx) => {
     const planId = ensureWeekPlan(tx as unknown as Db, isoWeek);
     if (result.remove.length) {
@@ -115,7 +151,7 @@ export function generateWeekPlan(
       .run();
   });
 
-  return { week: loadWeek(db, isoWeek), changes };
+  return { persisted: true, week: loadWeek(db, isoWeek), changes };
 }
 
 export function weekCompliance(db: Db, isoWeek: string): Compliance {

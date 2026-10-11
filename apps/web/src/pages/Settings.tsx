@@ -15,6 +15,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 import { api, errorText } from '../api.js';
 import { EquipmentEditor, NO_EQUIPMENT } from '../components/EquipmentEditor.js';
+import { BlocksSection } from './BlocksSection.js';
 import { WEEKDAYS, shortDate } from '../lib/format.js';
 import { useNow } from '../lib/useNow.js';
 import {
@@ -25,6 +26,7 @@ import {
   useEvents,
   useFixtures,
   useHabits,
+  useHealth,
   useSetupStatus,
   useTemplates,
 } from '../queries.js';
@@ -528,6 +530,45 @@ function ExportSection() {
   );
 }
 
+function BackupSection() {
+  const client = useQueryClient();
+  const health = useHealth();
+  const backup = useMutation({
+    mutationFn: () => api<{ file: string; count: number }>('POST', '/admin/backup'),
+    onSuccess: () => client.invalidateQueries({ queryKey: keys.health }),
+  });
+  const info = health.data?.backup;
+  return (
+    <>
+      <p aria-label="Backup status">
+        {info?.last
+          ? `Last backup ${new Date(info.last).toLocaleString()}. ${info.count} kept.`
+          : 'No backup yet.'}
+      </p>
+      <div className="row wrap">
+        <button type="button" disabled={backup.isPending} onClick={() => backup.mutate()}>
+          Back up now
+        </button>
+        {info?.last && (
+          <a className="button" href="/api/admin/backup/latest" download>
+            Download latest backup
+          </a>
+        )}
+      </div>
+      {backup.isSuccess && (
+        <p role="status" className="muted">
+          Saved {backup.data.file}
+        </p>
+      )}
+      {backup.isError && (
+        <p role="alert" className="error">
+          {errorText(backup.error)}
+        </p>
+      )}
+    </>
+  );
+}
+
 export function Settings() {
   const { today } = useNow();
   const status = useSetupStatus();
@@ -538,8 +579,6 @@ export function Settings() {
   const templates = useTemplates();
   const habits = useHabits();
   const blocks = useBlocks();
-  const block =
-    blocks.data?.find((b) => b.start_date <= today && b.end_date >= today) ?? blocks.data?.[0];
 
   return (
     <main>
@@ -561,28 +600,17 @@ export function Settings() {
           <HabitRow key={h.id} habit={h} />
         ))}
       </Section>
-      <Section title="Progression rules">
-        {block ? (
-          <>
-            <p className="muted">
-              {block.name}, {shortDate(block.start_date)} to {shortDate(block.end_date)}. Read-only
-              here.
-            </p>
-            <pre className="rules" tabIndex={0} aria-label="Rules JSON">
-              {JSON.stringify(block.progression_rules, null, 2)}
-            </pre>
-          </>
-        ) : (
-          <p className="muted">No block yet.</p>
-        )}
+      <Section title="Blocks and rules">
+        {blocks.data && <BlocksSection blocks={blocks.data} today={today} />}
       </Section>
       <Section title="Export">
         <ExportSection />
       </Section>
-      <Section title="Data folder">
+      <Section title="Data folder and backups">
         <p>
           <code>{status.data?.data_dir}</code>
         </p>
+        <BackupSection />
       </Section>
     </main>
   );

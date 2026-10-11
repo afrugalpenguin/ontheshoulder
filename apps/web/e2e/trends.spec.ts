@@ -3,7 +3,7 @@ import { expect, test, type APIRequestContext } from '@playwright/test';
 // Trends in a phone-sized browser against 90 days of synthetic history: the
 // review card, all five charts actually drawn, and how long the route takes.
 
-const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}`;
+const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}/api`;
 const START = '2031-06-02'; // a Monday, clear of the other flows' dates
 const DAYS = 90;
 const TODAY = new Date(Date.UTC(2031, 7, 30, 9, 0, 0)); // Saturday 30 August, day 90

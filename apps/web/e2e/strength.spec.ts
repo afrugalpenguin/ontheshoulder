@@ -3,7 +3,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 // Strength A logged set by set in a phone-sized browser, twice, to see the
 // loads progress; then the same screens with dumbbells only and with no kit.
 
-const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}`;
+const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}/api`;
 const at = (day: number, hour: number) => new Date(Date.UTC(2031, 0, day, hour, 0, 0));
 
 const FULL_KIT = {

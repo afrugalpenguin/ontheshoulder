@@ -84,7 +84,7 @@ describe('garmin import inbox', () => {
 
 describe('export', () => {
   it('exports every table as JSON', async () => {
-    const res = await t.app.inject({ method: 'GET', url: '/export/json' });
+    const res = await t.app.inject({ method: 'GET', url: '/api/export/json' });
     expect(res.headers['content-disposition']).toContain('ontheshoulder-export.json');
     const body = res.json<{ exported_at: string; tables: Record<string, unknown[]> }>();
     expect(Object.keys(body.tables)).toHaveLength(17);
@@ -93,7 +93,7 @@ describe('export', () => {
   });
 
   it('exports one table as CSV with a header row', async () => {
-    const res = await t.app.inject({ method: 'GET', url: '/export/csv/habit_definition' });
+    const res = await t.app.inject({ method: 'GET', url: '/api/export/csv/habit_definition' });
     expect(res.headers['content-type']).toContain('text/csv');
     const lines = res.body.trim().split('\r\n');
     expect(lines[0]).toBe('id,key,label,prompt_text,prompt_until,enabled');
@@ -102,7 +102,7 @@ describe('export', () => {
   });
 
   it('exports an empty table as just the header', async () => {
-    const res = await t.app.inject({ method: 'GET', url: '/export/csv/activity' });
+    const res = await t.app.inject({ method: 'GET', url: '/api/export/csv/activity' });
     expect(res.body.trim().split('\r\n')).toHaveLength(1);
   });
 
