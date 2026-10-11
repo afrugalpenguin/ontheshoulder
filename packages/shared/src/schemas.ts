@@ -267,6 +267,8 @@ export const SetLogInput = Type.Object({
   rpe: OptNull(Type.Number({ minimum: 1, maximum: 10 })),
   done_at: OptNull(Type.String({ maxLength: 40 })),
   notes: OptNull(Text),
+  /** A warm-up set. Logged, but left out of progression and working weights. */
+  warmup: Opt(Type.Boolean()),
 });
 export const SetLog = Type.Required(
   Type.Object({
@@ -370,6 +372,8 @@ export const ProgrammeSlotInput = Type.Object({
   increment_kg: OptNull(Kg),
   start_load_kg: OptNull(Kg),
   notes: OptNull(Text),
+  /** Offer the warm-up ramp before the working sets. On unless switched off. */
+  warmups_enabled: Opt(Type.Boolean()),
 });
 export const ProgrammeSlot = Type.Required(
   Type.Object({
@@ -385,6 +389,7 @@ export const ProgrammeSlotPatch = Type.Object({
   increment_kg: OptNull(Kg),
   start_load_kg: OptNull(Kg),
   notes: OptNull(Text),
+  warmups_enabled: Opt(Type.Boolean()),
 });
 
 /** One past session of a programme day, with its sets. Lists are most recent first. */

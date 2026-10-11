@@ -124,3 +124,24 @@ describe('loadSummary', () => {
     );
   });
 });
+
+describe('plate pairs quick view', () => {
+  const pairs = () => screen.queryByRole('region', { name: 'Plate pairs' });
+
+  it('is absent with no plates', () => {
+    setup();
+    expect(pairs()).toBeNull();
+  });
+
+  it('shows a chip per plate size with its pair count, heaviest first, and the heaviest bar', async () => {
+    const { user } = setup({ ...NO_EQUIPMENT, bar_kg: 20 });
+    await user.click(screen.getByRole('button', { name: 'Add standard set' }));
+    await user.click(screen.getByRole('button', { name: 'One more pair of 20kg' }));
+    const view = within(pairs() as HTMLElement);
+    expect(view.getByLabelText('20 kg, 2 pairs').textContent).toBe('20 x 2');
+    expect(
+      [...(pairs() as HTMLElement).querySelectorAll('.chip')].map((c) => c.textContent),
+    ).toEqual(['20 x 2', '10 x 1', '5 x 1', '2.5 x 1', '1.25 x 1']);
+    expect(view.getByText('Heaviest bar: 137.5 kg, with every plate on.')).toBeTruthy();
+  });
+});

@@ -88,6 +88,8 @@ export const trendRoutes: FastifyPluginAsyncTypebox = async (app) => {
         .where(
           and(
             eq(programme_slot.load_rule, 'linear'),
+            // Warm-up sets are not working weight.
+            eq(set_log.warmup, false),
             gte(activity.date, from),
             lte(activity.date, to),
           ),

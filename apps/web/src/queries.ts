@@ -107,6 +107,20 @@ export const useDayHistory = (id: number) =>
     queryFn: () => api<StrengthHistoryEntry[]>('GET', `/programme-days/${id}/history`),
   });
 
+/** History for several days at once, in the order asked for. Undefined until all have loaded. */
+export function useDayHistories(ids: number[]): StrengthHistoryEntry[][] | undefined {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: keys.dayHistory(id),
+      queryFn: () => api<StrengthHistoryEntry[]>('GET', `/programme-days/${id}/history`),
+    })),
+    combine: (results) =>
+      results.every((r) => r.data)
+        ? results.map((r) => r.data as StrengthHistoryEntry[])
+        : undefined,
+  });
+}
+
 export const useWeek = (isoWeek: string) =>
   useQuery({ queryKey: keys.week(isoWeek), queryFn: () => api<Week>('GET', `/weeks/${isoWeek}`) });
 

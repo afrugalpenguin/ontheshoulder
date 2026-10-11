@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { achievableLoads, describeLoad, snapLoad } from './equipment.js';
+import { achievableLoads, describeLoad, platesEachSide, snapLoad } from './equipment.js';
 import type { Equipment } from './schemas.js';
 
 const kit = (over: Partial<Equipment> = {}): Equipment => ({
@@ -212,5 +212,41 @@ describe('describeLoad', () => {
     expect(describeLoad(61, full)).toBeNull();
     expect(describeLoad(14, full, 'dumbbell')).toBeNull();
     expect(describeLoad(60, kit())).toBeNull();
+  });
+});
+
+describe('platesEachSide', () => {
+  const full = kit({ bar_kg: 20, plates: FULL_PLATES });
+
+  it.each([
+    [20, []],
+    [60, [{ kg: 20, count: 1 }]],
+    [
+      65,
+      [
+        { kg: 20, count: 1 },
+        { kg: 2.5, count: 1 },
+      ],
+    ],
+    [
+      62.5,
+      [
+        { kg: 20, count: 1 },
+        { kg: 1.25, count: 1 },
+      ],
+    ],
+    [97.5, FULL_PLATES],
+  ])('%skg on a 20kg bar', (load, expected) => {
+    expect(platesEachSide(load, full)).toEqual(expected);
+  });
+
+  it('uses two of a plate on each side when the kit has two pairs', () => {
+    const doubled = kit({ bar_kg: 20, plates: [{ kg: 20, count: 2 }] });
+    expect(platesEachSide(100, doubled)).toEqual([{ kg: 20, count: 2 }]);
+  });
+
+  it('is null with no bar, or for a load the kit cannot make', () => {
+    expect(platesEachSide(60, kit({ plates: FULL_PLATES }))).toBeNull();
+    expect(platesEachSide(61, full)).toBeNull();
   });
 });

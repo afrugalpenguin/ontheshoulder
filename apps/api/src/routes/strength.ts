@@ -51,6 +51,7 @@ function slotValues(slot: ProgrammeSlotInput, dayId: number, position: number) {
     increment_kg: slot.increment_kg ?? null,
     start_load_kg: slot.start_load_kg ?? null,
     notes: slot.notes ?? null,
+    warmups_enabled: slot.warmups_enabled ?? true,
   };
 }
 
@@ -189,7 +190,7 @@ export const strengthRoutes: FastifyPluginAsyncTypebox = async (app) => {
           .select()
           .from(set_log)
           .where(eq(set_log.strength_session_id, session.id))
-          .orderBy(asc(set_log.slot_id), asc(set_log.set_no))
+          .orderBy(asc(set_log.slot_id), desc(set_log.warmup), asc(set_log.set_no))
           .all(),
       }));
     },
