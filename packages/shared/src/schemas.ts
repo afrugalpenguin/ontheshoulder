@@ -440,6 +440,48 @@ export const TrendDay = Type.Object({
   metrics: Type.Record(Type.String(), Type.Number()),
 });
 
+// Data folder, restart and about (Settings)
+
+export const DataStatus = Type.Object({
+  /** The folder the running api is using. */
+  data_dir: Type.String(),
+  /** Size of the database file and its write-ahead log, in bytes. */
+  db_bytes: Type.Integer(),
+  backup: Type.Object({ last: Nullable(Type.String()), count: Type.Integer() }),
+  /** The config file, or null when the api was started without one (tests). */
+  config_path: Nullable(Type.String()),
+  /** The folder the config file names. Differs from data_dir after a move, until a restart. */
+  configured_data_dir: Nullable(Type.String()),
+  restart_required: Type.Boolean(),
+  /** False when the api cannot bring itself back and must be restarted by hand. */
+  can_restart: Type.Boolean(),
+  /** Settings an environment variable is overriding, by config file key. */
+  env_overrides: Type.Array(Type.String()),
+  port: Type.Integer(),
+  lan_guard: Type.Boolean(),
+  log_level: Type.String(),
+});
+
+export const MoveDataInput = Type.Object({
+  path: Type.String({ minLength: 1, maxLength: 500 }),
+});
+
+export const MoveDataResult = Type.Object({
+  from: Type.String(),
+  to: Type.String(),
+  tables: Type.Integer(),
+  rows: Type.Integer(),
+  backups: Type.Integer(),
+  marker: Type.String(),
+  restart_required: Type.Boolean(),
+});
+
+export const About = Type.Object({
+  version: Type.String(),
+  licence: Type.String(),
+  repository: Nullable(Type.String()),
+});
+
 // Setup, health and misc
 
 export const SetupStatus = Type.Object({
@@ -544,5 +586,9 @@ export type SetupStatus = Static<typeof SetupStatus>;
 export type StarterTemplate = Static<typeof StarterTemplate>;
 export type ApplyTemplateResult = Static<typeof ApplyTemplateResult>;
 export type Health = Static<typeof HealthSchema>;
+export type DataStatus = Static<typeof DataStatus>;
+export type MoveDataInput = Static<typeof MoveDataInput>;
+export type MoveDataResult = Static<typeof MoveDataResult>;
+export type About = Static<typeof About>;
 export type GarminStatus = Static<typeof GarminStatus>;
 export type ErrorBody = Static<typeof ErrorBody>;

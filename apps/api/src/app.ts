@@ -20,12 +20,26 @@ declare module 'fastify' {
     openDb: OpenDb;
     dataDir: string;
     appVersion: string;
+    runtime: Runtime;
   }
 }
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
   version: string;
 };
+
+/** How this api was started: what Settings needs to know to move the data folder or restart. */
+export interface Runtime {
+  /** The config file in use, or null when there is none (tests). */
+  configPath: string | null;
+  /** Settings an environment variable is overriding, by config file key. */
+  overrides: string[];
+  port: number;
+  lanGuard: boolean;
+  logLevel: string;
+  /** Ends the process so the service manager starts it again. Null when nothing would. */
+  restart: (() => void) | null;
+}
 
 /** Every api route lives under this prefix; everything else is the web app. */
 export const API_PREFIX = '/api';
@@ -47,6 +61,8 @@ export interface AppOptions extends FastifyServerOptions {
   lanGuard?: boolean;
   /** Folder with the built web app (index.html). Served from / when it exists. */
   webDir?: string | null;
+  /** How the api was started. Left out in tests: no config file, no restart. */
+  runtime?: Partial<Runtime>;
 }
 
 /** Opens and migrates the database in `dataDir`, then builds the api around it. */
@@ -57,6 +73,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     backups = false,
     lanGuard: guard = true,
     webDir = null,
+    runtime = {},
     ...fastifyOptions
   } = options;
   const app = Fastify(fastifyOptions).withTypeProvider<TypeBoxTypeProvider>();
@@ -70,6 +87,15 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   app.decorate('openDb', open);
   app.decorate('dataDir', open.dataDir);
   app.decorate('appVersion', pkg.version);
+  app.decorate('runtime', {
+    configPath: null,
+    overrides: [],
+    port: 0,
+    lanGuard: guard,
+    logLevel: 'info',
+    restart: null,
+    ...runtime,
+  });
   app.addHook('onClose', () => {
     open.sqlite.close();
   });
