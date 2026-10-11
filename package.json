@@ -1,0 +1,29 @@
+{
+  "name": "ontheshoulder",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.34.6",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @ots/shared build && concurrently --kill-others-on-fail --names shared,api,web \"pnpm --filter @ots/shared dev\" \"pnpm --filter @ots/api dev\" \"pnpm --filter @ots/web dev\"",
+    "build": "pnpm -r build",
+    "test": "pnpm --filter @ots/shared build && pnpm -r test",
+    "lint": "eslint .",
+    "typecheck": "pnpm --filter @ots/shared build && pnpm -r typecheck",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1"
+  }
+}
