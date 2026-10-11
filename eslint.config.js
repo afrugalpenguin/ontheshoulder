@@ -21,6 +21,7 @@ export default tseslint.config(
       'apps/web/vite.config.ts',
       'apps/web/playwright.config.ts',
       'apps/web/e2e/**/*.ts',
+      'apps/web/scripts/**/*.mjs',
       '*.js',
     ],
     languageOptions: { globals: globals.node },

@@ -21,6 +21,12 @@ export const rebuild100: StarterTemplateData = {
       prompt_text: 'Oi. Protein.',
       prompt_until: '12:00',
     },
+    // Ticked from the evening banner about tomorrow. {session} is replaced by what is planned.
+    {
+      key: 'kit_ready',
+      label: 'Kit out for tomorrow',
+      prompt_text: 'Tomorrow: {session}. Kit out?',
+    },
   ],
 
   exercises: [

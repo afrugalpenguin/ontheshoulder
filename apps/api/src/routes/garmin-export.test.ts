@@ -97,7 +97,7 @@ describe('export', () => {
     expect(res.headers['content-type']).toContain('text/csv');
     const lines = res.body.trim().split('\r\n');
     expect(lines[0]).toBe('id,key,label,prompt_text,prompt_until,enabled');
-    expect(lines).toHaveLength(5);
+    expect(lines).toHaveLength(6);
     expect(lines[4]).toBe('4,protein_shake,Protein shake,Oi. Protein.,12:00,true');
   });
 
