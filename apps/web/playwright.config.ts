@@ -37,7 +37,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter @ots/api exec tsx src/server.ts',
-      url: `http://127.0.0.1:${API_PORT}/health`,
+      url: `http://127.0.0.1:${API_PORT}/api/health`,
       env,
       reuseExistingServer: false,
       timeout: 60_000,
