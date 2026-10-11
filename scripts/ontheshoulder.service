@@ -19,8 +19,9 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=%h/ontheshoulder/apps/api
 ExecStart=/usr/bin/env node --env-file-if-exists=../../.env dist/server.js
-Restart=on-failure
-RestartSec=60
+# Always, so that Restart in Settings (a clean exit) brings it back as well as a crash.
+Restart=always
+RestartSec=2
 
 [Install]
 WantedBy=default.target
