@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig } from '@playwright/test';
 
-// The flow runs against a real api on a fresh database in a temp folder, and
-// the Vite dev server proxying to it. Ports are off the dev defaults so a
+// The flows run against a real api on a fresh database in a temp folder, and
+// the built web bundle served by `vite preview` proxying to it (build first). Ports are off the dev defaults so a
 // running `pnpm dev` is left alone.
 const API_PORT = process.env.OTS_E2E_API_PORT ?? '3183';
 const WEB_PORT = process.env.OTS_E2E_WEB_PORT ?? '5183';
@@ -43,7 +43,7 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
-      command: `pnpm --filter @ots/web exec vite --host 127.0.0.1 --port ${WEB_PORT} --strictPort`,
+      command: `pnpm --filter @ots/web exec vite preview --host 127.0.0.1 --port ${WEB_PORT} --strictPort`,
       url: `http://127.0.0.1:${WEB_PORT}/`,
       env,
       reuseExistingServer: false,
