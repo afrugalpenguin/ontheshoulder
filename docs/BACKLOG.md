@@ -36,7 +36,7 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - The first chart request loads the rules validator with the main bundle (about 10 kB gzipped more); it could load with Settings instead
 - A done session can be undone but not edited from Week; editing needs a sheet that patches the activity
 - Check-in is only on today's row; a missed day cannot be filled in afterwards from Week
-- `NumberField` is still used by the kit editor; stage 15 replaces it with the primitives
+- `NumberField` and the plain text inputs in Settings and setup have no primitive; add an input primitive if they are to match the rest
 - The demo page screenshots in `docs/screenshots` are taken by hand; nothing regenerates them
 - `docs/SPEC.md` 6.3 still describes the run-walk ladder as the Block 1 default, and 5.2 and 5.3 list run fields the log sheet no longer asks for; bring the spec in line with v1.1
 - Run minutes on Week count every run activity in the week, linked to a planned session or not
@@ -44,3 +44,8 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Notes on a programme slot (for example "each leg") are no longer shown on the session screen; decide where they belong
 - The old `RestTimer` is now used only by the rest demo page at `/timer/rest-demo`
 - Per-set RPE and notes can no longer be entered (by design); the columns remain in `set_log`
+- A mapped network drive (a drive letter that is really a share) is not detected by the data folder check; only `\\server\share` paths are refused
+- Rows written between "Change folder" and the restart stay in the old folder; the UI says to restart, but nothing stops use in between
+- The old data folder is never cleaned up after a move; there is no "remove the old copy" action
+- `OTS_HOST` and `OTS_LOG_DIR` are not in the config file
+- The scheduled task's restart loop and `Restart=always` were not exercised with a real task or unit, only with a stand-in supervisor
