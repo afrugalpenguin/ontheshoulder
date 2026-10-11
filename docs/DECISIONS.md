@@ -17,3 +17,4 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Repo is public-ready from the start: MIT, no personal data in the tree, database and backups outside the repo. Rejected committing the database or a text dump for the same reason.
 - 2026-10-11: Garmin sidecar demoted to optional and last.
 - 2026-10-11: v0.2.1. Midweek run: the week run_sec would hit 300 is the first 25 min continuous run (week 7), not a final run-walk week. Long run grows by repeats (+3 per week to 30) with 120/60 blocks fixed. Race specifics removed from docs; only the event shape is described.
+- 2026-10-11: v0.2.2. Race generalised to Event with priority A/B/C and status. One A event drives the countdown; B and C events are milestones and can end blocks. Setup asks for the A event only.

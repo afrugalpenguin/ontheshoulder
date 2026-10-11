@@ -1,6 +1,6 @@
 # On the Shoulder: specification
 
-Status: draft v0.2, 2026-10-11
+Status: draft v0.2.2, 2026-10-11
 Licence: MIT
 
 ## 1. Purpose
@@ -63,7 +63,7 @@ Canonical names. Use them in code, routes and UI.
 ### 5.1 Setup and configuration
 
 - **Athlete**: display_name, units (metric only in v1 but stored), week_start (Monday), timezone.
-- **Race**: name, date, distance_km, location, time_limit_h, notes, date_confirmed (bool). One active race.
+- **Event**: name, date, distance_km, location, url, time_limit_h, priority (A, B, C), status (planned, entered, done, skipped), date_confirmed (bool), result_notes. Exactly one event with priority A is the goal and drives the countdown on Today; B and C events are milestones (a 50k, a 50-miler) shown under the countdown as "next up" and as markers on Week and Trends. Setup asks for the A event only; others are added in Settings.
 - **Equipment**: the kit this user owns. Three lists, each may be empty:
   - plates: array of `{ kg, count }` (count is per pair, e.g. two 20kg plates is `{20, 1}`), plus bar_kg (default 20, nullable if no barbell)
   - dumbbells: array of kg values for the pairs owned
@@ -74,7 +74,7 @@ Canonical names. Use them in code, routes and UI.
 
 ### 5.2 Plan
 
-- **Block**: name, start_date, end_date, purpose (rebuild, base, build, peak, taper, recovery), progression_rules (JSON, see 6.3). Blocks tile the calendar to race day.
+- **Block**: name, start_date, end_date, purpose (rebuild, base, build, peak, taper, recovery), progression_rules (JSON, see 6.3), ends_at_event_id (nullable). A block may end at an event instead of a date, so "to the 50k" moves if the event does. Blocks tile the calendar to the A event.
 - **SessionTemplate**: kind (run, walk_vest, walk, ride, swim, strength, prehab, mobility, rest), name, default_duration_min, structure (JSON, 5.5), programme_day_id (strength only), notes, tags.
 - **WeekPlan**: per ISO week, generated from fixtures and rules. Holds **PlannedSession** rows.
 - **PlannedSession**: date, template_id, slot, targets (duration_min, run_block_sec, walk_block_sec, repeats, vest_kg, distance_km), status (planned, done, skipped, modified), skip_reason (tired, sleep, family, injury, time, other), edited_by_user, linked_activity_id, optional (bool, true for Sunday sessions by default).
@@ -111,7 +111,7 @@ Continuous runs omit repeats and run_sec. Vest walks: `{ "vest_kg": 20 }`. Stren
 
 ### 6.1 Inputs
 
-Race date, blocks with rules, fixtures, last week's planned sessions with status, and user edits.
+A event date, blocks with rules, fixtures, last week's planned sessions with status, and user edits.
 
 ### 6.2 Week generation
 
@@ -141,11 +141,11 @@ Mobile-first, dark by default, large targets, no precise taps. Five tabs: Today,
 
 ### 8.1 First run
 
-If no Athlete row exists, the app shows setup: name, race (name, date, distance, time limit), equipment (plates, bar, dumbbells, kettlebells, vest; each can be none), fixtures (pick a starter template or build the week by hand), data folder confirmation. Finishes by generating the first week. Everything is editable later in Settings.
+If no Athlete row exists, the app shows setup: name, A event (name, date, distance, time limit), equipment (plates, bar, dumbbells, kettlebells, vest; each can be none), fixtures (pick a starter template or build the week by hand), data folder confirmation. Finishes by generating the first week. Everything is editable later in Settings.
 
 ### 8.2 Today
 
-- Date, race countdown (weeks and days), week compliance so far.
+- Date, countdown to the A event (weeks and days), "next up" line for the nearest B or C event, week compliance so far.
 - Prompts strip: any enabled habit with `prompt_text` whose `prompt_until` has not passed and whose tick is not set shows as a single-line banner with a Done button and a "not today" dismiss. Protein shake is the seeded one.
 - Check-in strip until done: sleep and energy as 1 to 5 rows, weight, habits as checkboxes, ankle 0 to 5 as a small optional row, and on Sundays a "got up for it" toggle. One Save.
 - Session cards in slot order. Actions: Log (quick form, kind-specific fields pre-filled from the template structure), Skip (reason list), and for strength and vest walks Start (opens the timer screen). Sunday cards show an "optional" tag.
@@ -182,7 +182,7 @@ Vertical list on phone, seven columns on desktop. Planned versus done with statu
 
 ### 8.7 Settings
 
-Athlete, race, equipment, fixtures, habits (labels, prompts, cut-off times), blocks and rules (JSON editor with validation and a dry run), data folder and backups, export (JSON and CSV), Garmin on/off.
+Athlete, events (list, add, edit, set priority and status, record results), equipment, fixtures, habits (labels, prompts, cut-off times), blocks and rules (JSON editor with validation and a dry run), data folder and backups, export (JSON and CSV), Garmin on/off.
 
 ## 9. Operations
 

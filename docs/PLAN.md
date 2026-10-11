@@ -80,7 +80,7 @@ Starting loads are entered at setup (or left blank and set on the first session)
 
 ## Later blocks (outline only)
 
-Offsets are from the start of Block 1.
+Offsets are from the start of Block 1. Blocks 3 and 4 are intended to end at B events (a 50k and a 50-miler) entered in Settings; the week numbers are placeholders until those are chosen.
 
 - Block 2, weeks 11 to 18: third short run midweek, Sunday to 2 hours, low-stack shoes reintroduced for strides then one short run
 - Block 3, weeks 19 to 28: Sunday to 3 hours, a 50k event, swim and ride to maintenance
