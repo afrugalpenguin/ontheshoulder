@@ -26,3 +26,11 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Sidecar declares `requires-python >=3.12` and CI runs 3.12. Lets a newer local interpreter work until 3.12 is installed.
 - 2026-10-11: Prettier ignores `docs/`. Hand-written tables stay as written.
 - 2026-10-11: v0.2.2. Race generalised to Event with priority A/B/C and status. One A event drives the countdown; B and C events are milestones and can end blocks. Setup asks for the A event only.
+- 2026-10-11: Stage 3. TypeBox schemas live in `packages/shared` and both sides take their types from them with `Static`; no separate code generation step.
+- 2026-10-11: Stage 3. Session templates carry a stable `key` so rules, fixtures and the starter template can refer to them by name. Starter template rows are matched on natural keys, so applying twice inserts nothing and never overwrites edits.
+- 2026-10-11: Stage 3. At most one A event is enforced on write (409); zero A events is allowed and simply leaves setup incomplete.
+- 2026-10-11: Stage 3. `PUT /checkins/:date` merges, and sleep and energy are nullable, so a habit tick can be saved before the morning check-in. Dismissed prompts are stored on the check-in row, not on the phone.
+- 2026-10-11: Stage 3. The api migrates the database on start as well as through `db:migrate`. One fewer manual step for a self-hosted install.
+- 2026-10-11: Stage 3. Generated migrations are lowercased by `db:lowercase` before they are first applied, to keep SQL keywords lowercase.
+- 2026-10-11: Stage 3. The starter template block starts on the Monday of the week it is applied unless a start date is sent. The two fixed-load slots keep their guidance in notes because the template holds no loads.
+- 2026-10-11: Stage 3. `plate` equipment loads are the single plate sizes owned.
