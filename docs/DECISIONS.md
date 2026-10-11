@@ -25,3 +25,4 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: api routes are unprefixed for now (`/health`); the web dev proxy strips `/api`. Stage 10 moves routes under `/api`.
 - 2026-10-11: Sidecar declares `requires-python >=3.12` and CI runs 3.12. Lets a newer local interpreter work until 3.12 is installed.
 - 2026-10-11: Prettier ignores `docs/`. Hand-written tables stay as written.
+- 2026-10-11: v0.2.2. Race generalised to Event with priority A/B/C and status. One A event drives the countdown; B and C events are milestones and can end blocks. Setup asks for the A event only.
