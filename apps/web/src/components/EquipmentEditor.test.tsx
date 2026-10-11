@@ -42,7 +42,7 @@ describe('EquipmentEditor', () => {
   it('quick-adds the standard plate set and previews the achievable loads', async () => {
     const { latest, user } = setup();
     await user.click(screen.getByRole('checkbox', { name: 'I have a barbell' }));
-    expect(preview().getByText('20kg')).toBeTruthy();
+    expect(preview().getAllByText('20kg').length).toBeGreaterThan(0);
 
     await user.click(screen.getByRole('button', { name: 'Add standard set' }));
     expect(latest.value.bar_kg).toBe(20);

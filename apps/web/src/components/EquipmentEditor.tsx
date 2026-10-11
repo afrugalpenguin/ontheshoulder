@@ -1,4 +1,4 @@
-import { achievableLoads, type Equipment, type EquipmentType } from '@ots/shared';
+import { achievableLoads, describeLoad, type Equipment, type EquipmentType } from '@ots/shared';
 import { useState } from 'react';
 import { NumberField } from './NumberField.js';
 
@@ -14,6 +14,13 @@ const STANDARD_PLATES = [20, 10, 5, 2.5, 1.25];
 const PLATE_CHOICES = [25, 20, 15, 10, 5, 2.5, 1.25];
 const DUMBBELL_CHOICES = [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 30];
 const KETTLEBELL_CHOICES = [8, 12, 16, 20, 24, 28, 32];
+/** Kit types with a full "preview achievable loads" list, to sanity-check a plate list. */
+const PREVIEW_TYPES: [EquipmentType, string][] = [
+  ['barbell', 'barbell'],
+  ['dumbbell', 'dumbbell'],
+  ['kettlebell', 'kettlebell'],
+  ['plate', 'single plate'],
+];
 
 interface Props {
   value: Equipment;
@@ -236,6 +243,25 @@ export function EquipmentEditor({ value, onChange }: Props) {
           <dt>Kettlebells</dt>
           <dd>{loadSummary(value, 'kettlebell')}</dd>
         </dl>
+        {PREVIEW_TYPES.map(([type, label]) => {
+          const loads = achievableLoads(value, type);
+          if (loads.length === 0) return null;
+          return (
+            <details key={type} className="load-preview">
+              <summary>
+                Every {label} load ({loads.length})
+              </summary>
+              <ul className="plain">
+                {loads.map((kg) => (
+                  <li key={kg}>
+                    <strong>{kg}kg</strong>{' '}
+                    <span className="muted">{describeLoad(kg, value, type)}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          );
+        })}
       </section>
     </div>
   );

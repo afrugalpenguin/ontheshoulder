@@ -41,6 +41,25 @@ export const rebuild100: StarterTemplateData = {
     { name: 'Step-up, knee height', pattern: 'lunge', equipment: 'dumbbell', unilateral: true },
     { name: 'Kettlebell swing', pattern: 'hinge', equipment: 'kettlebell' },
     { name: 'Seated calf raise, plate on knees', pattern: 'calf', equipment: 'plate' },
+
+    // Not in the programme: same-pattern alternatives offered when kit is missing.
+    { name: 'Goblet squat', pattern: 'squat', equipment: 'kettlebell' },
+    { name: 'Dumbbell goblet squat', pattern: 'squat', equipment: 'dumbbell' },
+    { name: 'Bodyweight squat', pattern: 'squat', equipment: 'bodyweight' },
+    { name: 'Dumbbell Romanian deadlift', pattern: 'hinge', equipment: 'dumbbell' },
+    { name: 'Kettlebell deadlift', pattern: 'hinge', equipment: 'kettlebell' },
+    { name: 'Glute bridge', pattern: 'hinge', equipment: 'bodyweight' },
+    {
+      name: 'Bodyweight reverse lunge',
+      pattern: 'lunge',
+      equipment: 'bodyweight',
+      unilateral: true,
+    },
+    { name: 'Bodyweight step-up', pattern: 'lunge', equipment: 'bodyweight', unilateral: true },
+    { name: 'Dumbbell calf raise', pattern: 'calf', equipment: 'dumbbell' },
+    { name: 'Single-leg calf raise', pattern: 'calf', equipment: 'bodyweight', unilateral: true },
+    { name: 'Farmer carry', pattern: 'carry', equipment: 'dumbbell' },
+    { name: 'Plank', pattern: 'core', equipment: 'bodyweight' },
   ],
 
   programme_days: [
