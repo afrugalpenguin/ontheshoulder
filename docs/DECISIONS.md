@@ -34,3 +34,10 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 3. Generated migrations are lowercased by `db:lowercase` before they are first applied, to keep SQL keywords lowercase.
 - 2026-10-11: Stage 3. The starter template block starts on the Monday of the week it is applied unless a start date is sent. The two fixed-load slots keep their guidance in notes because the template holds no loads.
 - 2026-10-11: Stage 3. `plate` equipment loads are the single plate sizes owned.
+- 2026-10-11: Stage 4. Progression reads the previous week's targets for the same template; with no previous week it starts from the rule's start values. Edits therefore carry forward.
+- 2026-10-11: Stage 4. A continuous run is stored as one repeat with no walk block. `duration_min` is always the whole session including warm-up and cool-down.
+- 2026-10-11: Stage 4. Treadmill days are counted from done sessions in the rule's slot on its weekdays, not from the habit tick, because the engine never reads check-ins.
+- 2026-10-11: Stage 4. Regeneration keeps any session that is edited, linked, done or skipped; a kept session the user moved to another day stands in for its fixture so no duplicate is created.
+- 2026-10-11: Stage 4. Scheduler is a one-minute `setInterval` with the handled week persisted in `app_state`, using the PC's local time. Settings live on the athlete row (`plan_weekday`, `plan_time`).
+- 2026-10-11: Stage 4. `suggestLoad` takes the slot's session history (most recent first) because the deload rule needs two sessions. A null increment means "next load the kit can make"; an increment that cannot be made holds.
+- 2026-10-11: Stage 4. A week no block covers is generated from fixtures alone, and the reasoning says so.
