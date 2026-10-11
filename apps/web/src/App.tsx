@@ -1,46 +1,94 @@
-import type { Health } from '@ots/shared';
-import { useEffect, useState } from 'react';
+import { NavLink, Navigate, Route, Routes } from 'react-router';
+import { errorText } from './api.js';
+import { Placeholder } from './pages/Placeholder.js';
+import { Settings } from './pages/Settings.js';
+import { Today } from './pages/Today.js';
+import { Week } from './pages/Week.js';
+import { useSetupStatus } from './queries.js';
+import { SetupWizard } from './setup/SetupWizard.js';
 
-type HealthState =
-  { status: 'loading' } | { status: 'ok'; health: Health } | { status: 'error'; message: string };
+const TABS = [
+  { to: '/', label: 'Today' },
+  { to: '/week', label: 'Week' },
+  { to: '/strength', label: 'Strength' },
+  { to: '/trends', label: 'Trends' },
+  { to: '/settings', label: 'Settings' },
+] as const;
+
+function TabBar() {
+  return (
+    <nav className="tabbar" aria-label="Main">
+      {TABS.map((tab) => (
+        <NavLink key={tab.to} to={tab.to} end={tab.to === '/'}>
+          {tab.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
 
 export function App() {
-  const [state, setState] = useState<HealthState>({ status: 'loading' });
+  const status = useSetupStatus();
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/health')
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`api responded ${res.status}`);
-        return (await res.json()) as Health;
-      })
-      .then((health) => {
-        if (!cancelled) setState({ status: 'ok', health });
-      })
-      .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : String(err);
-        if (!cancelled) setState({ status: 'error', message });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  if (status.isPending) {
+    return (
+      <main>
+        <p className="muted">Loading...</p>
+      </main>
+    );
+  }
+  if (status.isError) {
+    return (
+      <main>
+        <h1>On the Shoulder</h1>
+        <p role="alert" className="error">
+          Cannot reach the api: {errorText(status.error)}
+        </p>
+        <button type="button" onClick={() => status.refetch()}>
+          Try again
+        </button>
+      </main>
+    );
+  }
+  if (!status.data.complete) return <SetupWizard dataDir={status.data.data_dir} />;
 
   return (
-    <main>
-      <h1>On the Shoulder</h1>
-      {state.status === 'loading' && <p>Checking the api...</p>}
-      {state.status === 'ok' && (
-        <dl>
-          <dt>api</dt>
-          <dd>ok</dd>
-          <dt>version</dt>
-          <dd>{state.health.version}</dd>
-          <dt>uptime</dt>
-          <dd>{state.health.uptime_s} s</dd>
-        </dl>
-      )}
-      {state.status === 'error' && <p role="alert">api unreachable: {state.message}</p>}
-    </main>
+    <>
+      <Routes>
+        <Route path="/" element={<Today />} />
+        <Route path="/week" element={<Week />} />
+        <Route path="/week/:isoWeek" element={<Week />} />
+        <Route
+          path="/strength"
+          element={
+            <Placeholder
+              title="Strength"
+              note="Set-by-set strength logging arrives in a later stage."
+            />
+          }
+        />
+        <Route
+          path="/trends"
+          element={
+            <Placeholder
+              title="Trends"
+              note="Charts and the weekly review arrive in a later stage."
+            />
+          }
+        />
+        <Route
+          path="/timer/:sessionId"
+          element={
+            <Placeholder
+              title="Timer"
+              note="The interval timer arrives in a later stage. Log the session from Today for now."
+            />
+          }
+        />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <TabBar />
+    </>
   );
 }
