@@ -4,3 +4,4 @@ coverage
 pnpm-lock.yaml
 .venv
 docs
+apps/api/drizzle

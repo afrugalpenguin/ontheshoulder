@@ -11,7 +11,12 @@ afterEach(() => {
 
 describe('App', () => {
   it('shows the health result from the api', async () => {
-    const health: Health = { ok: true, version: '9.9.9', uptime_s: 12 };
+    const health: Health = {
+      ok: true,
+      version: '9.9.9',
+      uptime_s: 12,
+      db: { ok: true, migration: '0000_init' },
+    };
     const fetchMock = vi.fn(() => Promise.resolve(Response.json(health)));
     vi.stubGlobal('fetch', fetchMock);
 

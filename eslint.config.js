@@ -8,7 +8,7 @@ export default tseslint.config(
   js.configs.recommended,
   tseslint.configs.recommended,
   {
-    files: ['apps/api/**/*.ts', 'apps/web/vite.config.ts', '*.js'],
+    files: ['apps/api/**/*.{ts,mjs}', 'apps/web/vite.config.ts', '*.js'],
     languageOptions: { globals: globals.node },
   },
   {

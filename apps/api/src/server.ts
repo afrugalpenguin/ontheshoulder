@@ -1,12 +1,16 @@
 import { buildApp } from './app.js';
 import { readConfig } from './config.js';
+import { resolveDataDir } from './db/client.js';
 
 const config = readConfig();
-const app = buildApp({ logger: { level: config.logLevel } });
 
 try {
+  const app = await buildApp({
+    dataDir: resolveDataDir(),
+    logger: { level: config.logLevel },
+  });
   await app.listen({ host: config.host, port: config.port });
 } catch (err) {
-  app.log.fatal(err, 'api failed to start');
+  console.error('api failed to start:', err);
   process.exit(1);
 }

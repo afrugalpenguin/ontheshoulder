@@ -1,0 +1,43 @@
+import { addDays, isoWeekStart, type Week } from '@ots/shared';
+import { asc, eq } from 'drizzle-orm';
+import type { Db } from '../db/client.js';
+import { planned_session, session_template, week_plan } from '../db/schema.js';
+
+/** Id of the week_plan row for an ISO week, creating an empty one if needed. */
+export function ensureWeekPlan(db: Db, isoWeek: string): number {
+  const found = db.select().from(week_plan).where(eq(week_plan.iso_week, isoWeek)).get();
+  if (found) return found.id;
+  return db.insert(week_plan).values({ iso_week: isoWeek }).returning().get().id;
+}
+
+/** The week as the api returns it. A week with no plan yet has no sessions. */
+export function loadWeek(db: Db, isoWeek: string): Week {
+  const start = isoWeekStart(isoWeek);
+  const plan = db.select().from(week_plan).where(eq(week_plan.iso_week, isoWeek)).get();
+  const rows = plan
+    ? db
+        .select({ session: planned_session, template: session_template })
+        .from(planned_session)
+        .innerJoin(session_template, eq(planned_session.template_id, session_template.id))
+        .where(eq(planned_session.week_plan_id, plan.id))
+        .orderBy(asc(planned_session.date), asc(planned_session.slot), asc(planned_session.id))
+        .all()
+    : [];
+  return {
+    iso_week: isoWeek,
+    start_date: start,
+    end_date: addDays(start, 6),
+    generated_at: plan?.generated_at ?? null,
+    reasoning: plan?.reasoning ?? [],
+    sessions: rows.map(({ session, template }) => ({
+      ...session,
+      template: {
+        key: template.key,
+        kind: template.kind,
+        name: template.name,
+        structure: template.structure,
+        programme_day_id: template.programme_day_id,
+      },
+    })),
+  };
+}
