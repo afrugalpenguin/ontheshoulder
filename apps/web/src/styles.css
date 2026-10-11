@@ -1,0 +1,49 @@
+/* Dark unless the system asks for light. data-theme on <html> overrides both. */
+:root {
+  color-scheme: dark;
+  --bg: #111315;
+  --fg: #e8eaed;
+  --muted: #9aa0a6;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --bg: #ffffff;
+    --fg: #1b1d1f;
+    --muted: #5f6368;
+  }
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --fg: #1b1d1f;
+  --muted: #5f6368;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, sans-serif;
+  font-size: 18px;
+}
+
+main {
+  padding: 1.5rem 1rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+}
