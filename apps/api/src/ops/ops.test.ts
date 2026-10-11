@@ -1,3 +1,4 @@
+import { gunzipSync, gzipSync } from 'node:zlib';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -146,7 +147,7 @@ describe('backups', () => {
     const habits = copy.prepare('select count(*) as n from habit_definition').get();
     copy.close();
     expect(row).toEqual({ display_name: 'Test Runner' });
-    expect(habits).toEqual({ n: 4 });
+    expect(habits).toEqual({ n: 5 });
   });
 
   it('keeps the newest 30 and deletes older ones, leaving other files alone', async () => {
@@ -241,6 +242,17 @@ describe('production serve', () => {
       expect(res.statusCode, path).toBe(200);
       expect(res.body).toContain('On the Shoulder');
     }
+
+    // A compressed copy left by the web build is sent to a browser that takes it.
+    writeFileSync(join(webDir, 'assets', 'app.js.gz'), gzipSync('console.log("app")'));
+    const zipped = await app.inject({
+      method: 'GET',
+      url: '/assets/app.js',
+      headers: { 'accept-encoding': 'gzip' },
+    });
+    expect(zipped.headers['content-encoding']).toBe('gzip');
+    expect(gunzipSync(zipped.rawPayload).toString()).toBe('console.log("app")');
+    expect((await get('/assets/app.js')).headers['content-encoding']).toBeUndefined();
 
     expect((await get('/api/health')).json()).toMatchObject({ ok: true });
     // An unknown api path is a JSON 404, never the web app.

@@ -116,14 +116,14 @@ describe('complianceText', () => {
 
   it('lists what is done and to do, with Sunday apart', () => {
     expect(complianceText(base)).toEqual({
-      main: 'Week so far: key sessions 1 of 2, treadmill mornings 2 of 4',
+      main: 'So far: key sessions 1 of 2, mornings 2 of 4',
       bonus: 'Bonus: not this week',
     });
   });
 
   it('says complete and reports a done bonus', () => {
     const done = complianceText({ ...base, complete: true, optional_done: 1 });
-    expect(done.main).toMatch(/^Week complete: /);
+    expect(done.main).toMatch(/^Complete: /);
     expect(done.bonus).toBe('Bonus done');
   });
 
@@ -134,6 +134,6 @@ describe('complianceText', () => {
       treadmill: { days_done: 0, days_needed: 0, met: true },
       optional_planned: 0,
     });
-    expect(plain).toEqual({ main: 'Week so far: 3 of 9 sessions done', bonus: null });
+    expect(plain).toEqual({ main: 'So far: 3 of 9 sessions', bonus: null });
   });
 });

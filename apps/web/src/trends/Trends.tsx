@@ -20,14 +20,14 @@ import { reviewSentences } from './review.js';
 // lines and points. Nothing depends on telling red from green.
 const VOLUME: SeriesStyle[] = [
   { type: 'bar', color: '--accent', unit: ' min' },
-  { type: 'bar', color: '--done', unit: ' min' },
+  { type: 'bar', color: '--success', unit: ' min' },
   { type: 'line', color: '--fg', scale: 'y2', range: [0, 5], faint: true, dash: [4, 4] },
 ];
 const WELLBEING: SeriesStyle[] = [
   { type: 'line', color: '--accent', range: [1, 5] },
-  { type: 'line', color: '--skipped', dash: [8, 5], range: [1, 5] },
+  { type: 'line', color: '--warning', dash: [8, 5], range: [1, 5] },
   { type: 'points', color: '--fg', scale: 'y2', range: [1, 10] },
-  { type: 'line', color: '--done', scale: 'y3', faint: true },
+  { type: 'line', color: '--success', scale: 'y3', faint: true },
   { type: 'line', color: '--muted', scale: 'y3', faint: true, dash: [2, 4] },
 ];
 const WEIGHT: SeriesStyle[] = [
@@ -36,7 +36,7 @@ const WEIGHT: SeriesStyle[] = [
 ];
 const LIFTS: SeriesStyle[] = [
   { type: 'line', color: '--accent', unit: 'kg' },
-  { type: 'line', color: '--skipped', dash: [8, 5], unit: 'kg' },
+  { type: 'line', color: '--warning', dash: [8, 5], unit: 'kg' },
 ];
 
 function ComplianceGrid({ weeks }: { weeks: TrendWeek[] }) {

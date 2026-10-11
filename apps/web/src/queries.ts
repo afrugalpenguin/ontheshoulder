@@ -17,9 +17,10 @@ import type {
   SetupStatus,
   StarterTemplate,
   StrengthHistoryEntry,
+  TrendWeek,
   Week,
 } from '@ots/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ApiError, api } from './api.js';
 
 // One place for query keys and the calls behind them.
@@ -42,6 +43,7 @@ export const keys = {
   compliance: (isoWeek: string) => ['compliance', isoWeek] as const,
   checkin: (date: string) => ['checkin', date] as const,
   lastWeight: (date: string) => ['last-weight', date] as const,
+  weeklyTrends: (from: string, to: string) => ['trends-weekly', from, to] as const,
 };
 
 export const useSetupStatus = () =>
@@ -108,6 +110,24 @@ export const useDayHistory = (id: number) =>
 export const useWeek = (isoWeek: string) =>
   useQuery({ queryKey: keys.week(isoWeek), queryFn: () => api<Week>('GET', `/weeks/${isoWeek}`) });
 
+/** Several weeks at once, in the order asked for. Undefined until every one has loaded. */
+export function useWeeks(isoWeeks: string[]): Week[] | undefined {
+  return useQueries({
+    queries: isoWeeks.map((isoWeek) => ({
+      queryKey: keys.week(isoWeek),
+      queryFn: () => api<Week>('GET', `/weeks/${isoWeek}`),
+    })),
+    combine: (results) =>
+      results.every((r) => r.data) ? results.map((r) => r.data as Week) : undefined,
+  });
+}
+
+export const useWeeklyTrends = (from: string, to: string) =>
+  useQuery({
+    queryKey: keys.weeklyTrends(from, to),
+    queryFn: () => api<TrendWeek[]>('GET', `/trends/weekly?from=${from}&to=${to}`),
+  });
+
 export const useCompliance = (isoWeek: string) =>
   useQuery({
     queryKey: keys.compliance(isoWeek),
@@ -161,6 +181,7 @@ export function useRefreshWeek() {
     Promise.all([
       client.invalidateQueries({ queryKey: keys.week(isoWeek) }),
       client.invalidateQueries({ queryKey: keys.compliance(isoWeek) }),
+      client.invalidateQueries({ queryKey: ['trends-weekly'] }),
     ]);
 }
 

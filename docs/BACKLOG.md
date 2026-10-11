@@ -17,7 +17,6 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Skipped: stage 8 (Garmin sync). Depends on the stage 2 go or no-go; the import inbox routes exist and only store payloads
 - Shared test files are not typechecked by `tsc` (they are excluded from the shared build); Vitest still runs them
 - `corepack enable` has not been run on the dev PC, so `pnpm` is not on the path outside the pinned shim
-- Today and Week have no way to undo a logged session from the UI (the api supports deleting the activity)
 - Settings cannot add or delete habits, or edit session templates, yet; the api can
 - The theme override function still has no control in Settings
 - Lighthouse accessibility could run in CI against the Playwright servers
@@ -35,3 +34,7 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Linux install (systemd unit, restore steps) is written from the Windows build and has not been run on Linux
 - `restore.ps1` has no Linux counterpart script; the runbook gives the manual steps
 - The first chart request loads the rules validator with the main bundle (about 10 kB gzipped more); it could load with Settings instead
+- A done session can be undone but not edited from Week; editing needs a sheet that patches the activity
+- Check-in is only on today's row; a missed day cannot be filled in afterwards from Week
+- `ScoreRow` and `NumberField` are still used by the strength slot card and the kit editor; stages 14 and 15 replace them with the primitives
+- The demo page screenshots in `docs/screenshots` are taken by hand; nothing regenerates them

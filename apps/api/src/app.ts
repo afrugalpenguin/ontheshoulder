@@ -91,7 +91,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   // fall back to index.html so a reload on /week or /settings still works.
   const hasWeb = webDir !== null && existsSync(join(webDir, 'index.html'));
   if (hasWeb) {
-    await app.register(fastifyStatic, { root: webDir, wildcard: false });
+    // The web build leaves a .br and a .gz beside each file; send those when the browser takes them.
+    await app.register(fastifyStatic, { root: webDir, wildcard: false, preCompressed: true });
     app.log.info({ webDir }, 'serving the web app');
   }
   app.setNotFoundHandler((req, reply) => {

@@ -35,6 +35,14 @@ export const HABITS: Habit[] = [
     prompt_until: '12:00',
     enabled: true,
   },
+  {
+    id: 5,
+    key: 'kit_ready',
+    label: 'Kit out for tomorrow',
+    prompt_text: 'Tomorrow: {session}. Kit out?',
+    prompt_until: null,
+    enabled: true,
+  },
 ];
 
 export const emptyCheckin = (date: string, over: Partial<Checkin> = {}): Checkin => ({

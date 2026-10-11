@@ -127,7 +127,7 @@ describe('starter template', () => {
       { start_date: '2031-01-08' },
     );
     expect(first.body.created).toEqual({
-      habits: 4,
+      habits: 5,
       exercises: 24,
       programme_days: 2,
       programme_slots: 12,
@@ -135,7 +135,7 @@ describe('starter template', () => {
       fixtures: 10,
       blocks: 1,
     });
-    expect(first.body.changes).toBe(61);
+    expect(first.body.changes).toBe(62);
 
     const second = await fresh.call<ApplyTemplateResult>(
       'POST',
@@ -156,6 +156,7 @@ describe('starter template', () => {
       'alcohol_free',
       'prehab_done',
       'protein_shake',
+      'kit_ready',
     ]);
     expect(habits.body[3]).toMatchObject({ prompt_text: 'Oi. Protein.', prompt_until: '12:00' });
 

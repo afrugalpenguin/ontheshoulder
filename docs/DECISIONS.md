@@ -74,3 +74,9 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 10. The rolling log file goes in `<data folder>/logs` unless `OTS_LOG_DIR` is set.
 - 2026-10-11: Stage 10. The personal-data check skips `LICENSE`, where the copyright holder's name belongs, and can take its terms from a CI secret (`OTS_PERSONAL_TERMS`) as well as the local `.personal-terms` file.
 - 2026-10-11: Stage 10. A systemd user unit is provided for Linux alongside the Windows scripts.
+- 2026-10-11: Stage 12. Colour tokens are accent, success and warning; warning doubles as the error and danger colour, and skipped sessions use it with a dashed border. Raw lengths survive only in the token definitions and the 900px breakpoint, because a media query cannot read a custom property.
+- 2026-10-11: Stage 12. The next-day prompt is one editable line on a `kit_ready` habit, with `{session}` replaced by what is planned, instead of a line per session kind. The habit is seeded by the starter template; a database set up before this stage has no such habit and gets the same default wording until one is added in Settings.
+- 2026-10-11: Stage 12. Streaks are worked out in the browser from existing endpoints. A treadmill morning is a weekday with a morning (am) session done. The mornings streak looks back four weeks and shows a plus sign when it reaches that far.
+- 2026-10-11: Stage 12. Start on a vest walk opens the timer already running, so the walk is Start then Finish. The log sheet is minutes, RPE and a note for every kind; the vest weight is taken from the plan.
+- 2026-10-11: Stage 12. Every screen but Week loads on first use, and the web build writes gzip and brotli copies that the api serves as they are. This took Lighthouse mobile performance on Week from 64 to 98.
+- 2026-10-11: Stage 12. Week draws once all of its first-screen data has arrived, so nothing shifts as it loads.

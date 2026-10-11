@@ -135,7 +135,7 @@ export function nextUpText(event: Event, today: string): string {
   return `Next up: ${event.name} ${when}`;
 }
 
-/** The week so far in one line. Sunday is reported apart and never as a failure. */
+/** The week so far in one short line. Sunday is reported apart and never as a failure. */
 export function complianceText(c: Compliance): { main: string; bonus: string | null } {
   const parts: string[] = [];
   if (c.required.length > 0) {
@@ -143,10 +143,10 @@ export function complianceText(c: Compliance): { main: string; bonus: string | n
     parts.push(`key sessions ${met} of ${c.required.length}`);
   }
   if (c.treadmill.days_needed > 0) {
-    parts.push(`treadmill mornings ${c.treadmill.days_done} of ${c.treadmill.days_needed}`);
+    parts.push(`mornings ${c.treadmill.days_done} of ${c.treadmill.days_needed}`);
   }
-  if (parts.length === 0) parts.push(`${c.sessions_done} of ${c.sessions_planned} sessions done`);
-  const main = `${c.complete ? 'Week complete' : 'Week so far'}: ${parts.join(', ')}`;
+  if (parts.length === 0) parts.push(`${c.sessions_done} of ${c.sessions_planned} sessions`);
+  const main = `${c.complete ? 'Complete' : 'So far'}: ${parts.join(', ')}`;
   const bonus =
     c.optional_planned === 0 ? null : c.optional_done > 0 ? 'Bonus done' : 'Bonus: not this week';
   return { main, bonus };
