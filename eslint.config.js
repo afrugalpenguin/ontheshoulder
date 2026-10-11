@@ -4,11 +4,25 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'services/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/e2e-results/**',
+      'services/**',
+    ],
+  },
   js.configs.recommended,
   tseslint.configs.recommended,
   {
-    files: ['apps/api/**/*.{ts,mjs}', 'apps/web/vite.config.ts', '*.js'],
+    files: [
+      'apps/api/**/*.{ts,mjs}',
+      'apps/web/vite.config.ts',
+      'apps/web/playwright.config.ts',
+      'apps/web/e2e/**/*.ts',
+      '*.js',
+    ],
     languageOptions: { globals: globals.node },
   },
   {
