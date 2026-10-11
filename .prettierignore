@@ -5,3 +5,4 @@ pnpm-lock.yaml
 .venv
 docs
 apps/api/drizzle
+e2e-results

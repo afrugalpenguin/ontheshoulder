@@ -14,7 +14,8 @@
     "test": "pnpm --filter @ots/shared build && pnpm -r test",
     "lint": "eslint .",
     "typecheck": "pnpm --filter @ots/shared build && pnpm -r typecheck",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "pnpm --filter @ots/shared build && pnpm --filter @ots/web e2e"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -40,3 +40,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
+
+# playwright
+e2e-results/
+playwright-report/
