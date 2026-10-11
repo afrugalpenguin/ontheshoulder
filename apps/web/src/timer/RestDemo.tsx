@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { playCue, unlockAudio, type CueName } from './cues.js';
 import { RestTimer } from './RestTimer.js';
+import { Button } from '../ui/index.js';
 
 /** A page to try the rest timer on its own: 30 seconds, cues at 10 and 0. */
 export function RestDemo() {
@@ -21,16 +22,15 @@ export function RestDemo() {
         <p className="muted">30 seconds. A cue at 10 seconds left and another at zero.</p>
       </header>
       {round === 0 ? (
-        <button
-          type="button"
-          className="primary"
+        <Button
+          variant="primary"
           onClick={() => {
             unlockAudio();
             setRound(1);
           }}
         >
           Log a set
-        </button>
+        </Button>
       ) : (
         <>
           <RestTimer
@@ -39,15 +39,14 @@ export function RestDemo() {
             cue={cue}
             onDone={() => setLog((lines) => [...lines, 'onDone called'])}
           />
-          <button
-            type="button"
+          <Button
             onClick={() => {
               setLog([]);
               setRound(round + 1);
             }}
           >
             Log the next set (resets the rest)
-          </button>
+          </Button>
         </>
       )}
       <ul aria-label="Cue log" className="plain">

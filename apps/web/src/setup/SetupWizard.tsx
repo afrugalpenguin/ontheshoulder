@@ -7,6 +7,7 @@ import { KIND_LABEL, WEEKDAYS } from '../lib/format.js';
 import { useNow } from '../lib/useNow.js';
 import { useStarters } from '../queries.js';
 import { finishSetup, type HandRow, type SetupState } from './finish.js';
+import { Button } from '../ui/index.js';
 
 const STEPS = ['You', 'Your event', 'Your kit', 'Your week', 'Your data'] as const;
 
@@ -249,18 +250,17 @@ export function SetupWizard({ dataDir }: { dataDir: string }) {
                         onChange={(e) => setRow(index, { minutes: e.target.value })}
                       />
                     </label>
-                    <button
-                      type="button"
-                      className="quiet"
+                    <Button
+                      variant="ghost"
                       onClick={() => set({ rows: state.rows.filter((_, i) => i !== index) })}
                     >
                       Remove session {index + 1}
-                    </button>
+                    </Button>
                   </fieldset>
                 ))}
-                <button type="button" onClick={() => set({ rows: [...state.rows, NEW_ROW] })}>
+                <Button onClick={() => set({ rows: [...state.rows, NEW_ROW] })}>
                   Add a session
-                </button>
+                </Button>
               </section>
             )}
           </>
@@ -287,13 +287,18 @@ export function SetupWizard({ dataDir }: { dataDir: string }) {
 
         <div className="row">
           {step > 0 && (
-            <button type="button" className="quiet" onClick={() => setStep(step - 1)}>
+            <Button variant="ghost" onClick={() => setStep(step - 1)}>
               Back
-            </button>
+            </Button>
           )}
-          <button type="submit" className="primary grow" disabled={!valid || finish.isPending}>
+          <Button
+            type="submit"
+            variant="primary"
+            className="grow"
+            disabled={!valid || finish.isPending}
+          >
             {step < STEPS.length - 1 ? 'Next' : finish.isPending ? 'Setting up...' : 'Finish'}
-          </button>
+          </Button>
         </div>
       </form>
     </main>

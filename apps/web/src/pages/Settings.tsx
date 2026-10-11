@@ -13,10 +13,12 @@ import {
   type Slot,
 } from '@ots/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { api, errorText } from '../api.js';
 import { EquipmentEditor, NO_EQUIPMENT } from '../components/EquipmentEditor.js';
 import { BlocksSection } from './BlocksSection.js';
+import { AboutSection, DataSection } from './DataSection.js';
+import { SettingsSection } from './SettingsSection.js';
 import { WEEKDAYS, shortDate } from '../lib/format.js';
 import { useNow } from '../lib/useNow.js';
 import {
@@ -27,40 +29,10 @@ import {
   useEvents,
   useFixtures,
   useHabits,
-  useHealth,
   useProgrammeDays,
-  useSetupStatus,
   useTemplates,
 } from '../queries.js';
-
-const EXPORT_TABLES = [
-  'activity',
-  'daily_checkin',
-  'body_metric',
-  'planned_session',
-  'strength_session',
-  'set_log',
-  'event',
-  'block',
-  'session_template',
-  'fixture',
-  'exercise',
-  'programme_day',
-  'programme_slot',
-  'habit_definition',
-  'equipment',
-  'athlete',
-  'week_plan',
-];
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <details className="card settings-section">
-      <summary>{title}</summary>
-      <div className="stack">{children}</div>
-    </details>
-  );
-}
+import { Button } from '../ui/index.js';
 
 /** Save button with its saved and failed states, shared by every section. */
 function SaveRow(props: {
@@ -70,9 +42,9 @@ function SaveRow(props: {
   const { mutation, label = 'Save' } = props;
   return (
     <div className="row">
-      <button type="submit" className="primary" disabled={mutation.isPending}>
+      <Button type="submit" variant="primary" disabled={mutation.isPending}>
         {label}
-      </button>
+      </Button>
       {mutation.isSuccess && (
         <span role="status" className="muted">
           Saved
@@ -284,13 +256,13 @@ function EventForm(props: { event: Event | null; aTaken: boolean; onDone: () => 
       )}
       <SaveRow mutation={save} label={event ? 'Save event' : 'Add event'} />
       <div className="row">
-        <button type="button" className="quiet" onClick={onDone}>
+        <Button variant="ghost" onClick={onDone}>
           Cancel
-        </button>
+        </Button>
         {event && event.priority !== 'A' && (
-          <button type="button" className="quiet danger" onClick={() => remove.mutate()}>
+          <Button variant="danger" onClick={() => remove.mutate()}>
             Delete event
-          </button>
+          </Button>
         )}
       </div>
     </form>
@@ -318,9 +290,9 @@ function EventsSection({ events }: { events: Event[] }) {
                   {e.date_confirmed ? '' : ', date not confirmed'}
                 </span>
               </span>
-              <button type="button" aria-label={`Edit ${e.name}`} onClick={() => setEditing(e.id)}>
+              <Button aria-label={`Edit ${e.name}`} onClick={() => setEditing(e.id)}>
                 Edit
-              </button>
+              </Button>
             </li>
           ),
         )}
@@ -328,9 +300,7 @@ function EventsSection({ events }: { events: Event[] }) {
       {editing === 'new' ? (
         <EventForm event={null} aTaken={aTaken} onDone={() => setEditing(null)} />
       ) : (
-        <button type="button" onClick={() => setEditing('new')}>
-          Add an event
-        </button>
+        <Button onClick={() => setEditing('new')}>Add an event</Button>
       )}
     </>
   );
@@ -425,23 +395,21 @@ function FixturesSection(props: { fixtures: Fixture[]; templates: SessionTemplat
               ))}
             </select>
           </label>
-          <button
-            type="button"
-            className="quiet"
+          <Button
+            variant="ghost"
             aria-label={`Remove fixture ${index + 1}`}
             onClick={() => setRows(rows.filter((_, i) => i !== index))}
           >
             <span aria-hidden="true">x</span>
-          </button>
+          </Button>
         </fieldset>
       ))}
       {firstTemplate !== undefined && (
-        <button
-          type="button"
+        <Button
           onClick={() => setRows([...rows, { weekday: 1, slot: 'am', template_id: firstTemplate }])}
         >
           Add a fixture
-        </button>
+        </Button>
       )}
       <SaveRow mutation={save} label="Save week shape" />
     </form>
@@ -508,69 +476,6 @@ function HabitRow({ habit }: { habit: Habit }) {
   );
 }
 
-function ExportSection() {
-  const [table, setTable] = useState(EXPORT_TABLES[0] as string);
-  return (
-    <>
-      <a className="button" href="/api/export/json" download>
-        Download everything (JSON)
-      </a>
-      <label>
-        Table
-        <select value={table} onChange={(e) => setTable(e.target.value)}>
-          {EXPORT_TABLES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </label>
-      <a className="button" href={`/api/export/csv/${table}`} download>
-        Download table (CSV)
-      </a>
-    </>
-  );
-}
-
-function BackupSection() {
-  const client = useQueryClient();
-  const health = useHealth();
-  const backup = useMutation({
-    mutationFn: () => api<{ file: string; count: number }>('POST', '/admin/backup'),
-    onSuccess: () => client.invalidateQueries({ queryKey: keys.health }),
-  });
-  const info = health.data?.backup;
-  return (
-    <>
-      <p aria-label="Backup status">
-        {info?.last
-          ? `Last backup ${new Date(info.last).toLocaleString()}. ${info.count} kept.`
-          : 'No backup yet.'}
-      </p>
-      <div className="row wrap">
-        <button type="button" disabled={backup.isPending} onClick={() => backup.mutate()}>
-          Back up now
-        </button>
-        {info?.last && (
-          <a className="button" href="/api/admin/backup/latest" download>
-            Download latest backup
-          </a>
-        )}
-      </div>
-      {backup.isSuccess && (
-        <p role="status" className="muted">
-          Saved {backup.data.file}
-        </p>
-      )}
-      {backup.isError && (
-        <p role="alert" className="error">
-          {errorText(backup.error)}
-        </p>
-      )}
-    </>
-  );
-}
-
 /**
  * One switch for warm-up sets. It is stored on each barbell slot that
  * progresses linearly, so it reads as on only when every one of them has it on.
@@ -611,9 +516,9 @@ export function WarmupsSetting({ days }: { days: ProgrammeDay[] }) {
   );
 }
 
+/** Settings: seven cards, each of which opens on its title and remembers how it was left. */
 export function Settings() {
   const { today } = useNow();
-  const status = useSetupStatus();
   const athlete = useAthlete();
   const events = useEvents();
   const equipment = useEquipment();
@@ -628,34 +533,34 @@ export function Settings() {
       <header className="page-head">
         <h1>Settings</h1>
       </header>
-      <Section title="You">{athlete.data && <AthleteSection athlete={athlete.data} />}</Section>
-      <Section title="Events">{events.data && <EventsSection events={events.data} />}</Section>
-      <Section title="Kit">
-        {days.data && <WarmupsSetting days={days.data} />}
-        {equipment.isSuccess && <EquipmentSection saved={equipment.data} />}
-      </Section>
-      <Section title="Week shape">
+      <SettingsSection id="athlete" title="Athlete and events">
+        {athlete.data && <AthleteSection athlete={athlete.data} />}
+        <h3>Events</h3>
+        {events.data && <EventsSection events={events.data} />}
+      </SettingsSection>
+      <SettingsSection id="fixtures" title="Fixtures">
         {fixtures.data && templates.data && (
           <FixturesSection fixtures={fixtures.data} templates={templates.data} />
         )}
-      </Section>
-      <Section title="Habits and prompts">
+      </SettingsSection>
+      <SettingsSection id="equipment" title="Equipment">
+        {days.data && <WarmupsSetting days={days.data} />}
+        {equipment.isSuccess && <EquipmentSection saved={equipment.data} />}
+      </SettingsSection>
+      <SettingsSection id="habits" title="Habits and prompts">
         {(habits.data ?? []).map((h) => (
           <HabitRow key={h.id} habit={h} />
         ))}
-      </Section>
-      <Section title="Blocks and rules">
+      </SettingsSection>
+      <SettingsSection id="blocks" title="Blocks and rules">
         {blocks.data && <BlocksSection blocks={blocks.data} today={today} />}
-      </Section>
-      <Section title="Export">
-        <ExportSection />
-      </Section>
-      <Section title="Data folder and backups">
-        <p>
-          <code>{status.data?.data_dir}</code>
-        </p>
-        <BackupSection />
-      </Section>
+      </SettingsSection>
+      <SettingsSection id="data" title="Data">
+        <DataSection />
+      </SettingsSection>
+      <SettingsSection id="about" title="About">
+        <AboutSection />
+      </SettingsSection>
     </main>
   );
 }

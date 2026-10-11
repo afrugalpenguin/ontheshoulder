@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { api, errorText } from '../api.js';
 import { keys, useExercises } from '../queries.js';
+import { Button } from '../ui/index.js';
 
 function ExerciseForm({ exercise, onDone }: { exercise: Exercise | null; onDone: () => void }) {
   const client = useQueryClient();
@@ -114,12 +115,12 @@ function ExerciseForm({ exercise, onDone }: { exercise: Exercise | null; onDone:
         </p>
       )}
       <div className="row">
-        <button type="submit" className="primary grow" disabled={save.isPending}>
+        <Button type="submit" variant="primary" className="grow" disabled={save.isPending}>
           {exercise ? 'Save exercise' : 'Add exercise'}
-        </button>
-        <button type="button" className="quiet" onClick={onDone}>
+        </Button>
+        <Button variant="ghost" onClick={onDone}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -145,9 +146,7 @@ export function ExerciseLibrary() {
       {editing === 'new' ? (
         <ExerciseForm exercise={null} onDone={() => setEditing(null)} />
       ) : (
-        <button type="button" onClick={() => setEditing('new')}>
-          Add an exercise
-        </button>
+        <Button onClick={() => setEditing('new')}>Add an exercise</Button>
       )}
 
       <ul className="plain stack">
@@ -157,9 +156,9 @@ export function ExerciseLibrary() {
               <ExerciseForm exercise={e} onDone={() => setEditing(null)} />
             ) : (
               <>
-                <button
-                  type="button"
-                  className="quiet exercise-row"
+                <Button
+                  variant="ghost"
+                  className="exercise-row"
                   aria-expanded={open === e.id}
                   onClick={() => setOpen(open === e.id ? null : e.id)}
                 >
@@ -170,7 +169,7 @@ export function ExerciseLibrary() {
                       {e.unilateral ? ', each side' : ''}
                     </span>
                   </span>
-                </button>
+                </Button>
                 {open === e.id && (
                   <div className="stack">
                     <p>{e.cues ?? 'No cues written yet.'}</p>
@@ -179,9 +178,7 @@ export function ExerciseLibrary() {
                         Video
                       </a>
                     )}
-                    <button type="button" onClick={() => setEditing(e.id)}>
-                      Edit {e.name}
-                    </button>
+                    <Button onClick={() => setEditing(e.id)}>Edit {e.name}</Button>
                   </div>
                 )}
               </>

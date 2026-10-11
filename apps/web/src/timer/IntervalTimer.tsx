@@ -15,6 +15,7 @@ import {
   type TimerState,
   type TimerSummary,
 } from './machine.js';
+import { Button } from '../ui/index.js';
 
 interface Props {
   title: string;
@@ -175,35 +176,35 @@ export function IntervalTimer({ title, plan, onFinish, cue = playCue, autostart 
       </p>
 
       {state.status === 'idle' && (
-        <button
-          type="button"
-          className="primary timer-main"
+        <Button
+          variant="primary"
+          className="timer-main"
           onClick={() => {
             unlockAudio();
             act(start);
           }}
         >
           Start
-        </button>
+        </Button>
       )}
       {state.status === 'running' && (
-        <button type="button" className="primary timer-main" onClick={() => act(pause)}>
+        <Button variant="primary" className="timer-main" onClick={() => act(pause)}>
           Pause
-        </button>
+        </Button>
       )}
       {state.status === 'paused' && (
-        <button type="button" className="primary timer-main" onClick={() => act(resume)}>
+        <Button variant="primary" className="timer-main" onClick={() => act(resume)}>
           Resume
-        </button>
+        </Button>
       )}
       {active && (
         <div className="row">
-          <button type="button" className="grow" onClick={() => act(skipPhase)}>
+          <Button className="grow" onClick={() => act(skipPhase)}>
             Skip phase
-          </button>
-          <button type="button" className="grow" onClick={() => act(endEarly)}>
+          </Button>
+          <Button className="grow" onClick={() => act(endEarly)}>
             End early
-          </button>
+          </Button>
         </div>
       )}
     </main>

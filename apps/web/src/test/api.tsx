@@ -4,6 +4,7 @@ import { render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { MemoryRouter } from 'react-router';
 import { vi } from 'vitest';
+import { ApiError } from '../api.js';
 import { ToastProvider } from '../ui/index.js';
 import { emptyCheckin } from './fixtures.js';
 
@@ -45,16 +46,33 @@ function fallback(path: string): unknown {
 /**
  * Stubs fetch. GETs answer from `routes` by path (without /api), falling back
  * to an empty answer; a PUT to a check-in is merged into the stored check-in so
- * a refetch sees it. Every call is recorded.
+ * a refetch sees it. Every call is recorded. `respond` gives one method and
+ * path a handler, which may throw an ApiError to answer with that error; `set`
+ * changes what a GET returns from then on.
  */
 export function stubApi(routes: Record<string, unknown> = {}) {
   const store: Record<string, unknown> = { ...routes };
+  const handlers = new Map<string, (body: unknown) => unknown>();
   const calls: Call[] = [];
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input).replace(/^\/api/, '');
     const method = init?.method ?? 'GET';
     const body: unknown = init?.body ? JSON.parse(init.body as string) : undefined;
     calls.push({ method, path, body });
+    const handler = handlers.get(`${method} ${path}`);
+    if (handler) {
+      try {
+        return Promise.resolve(Response.json(handler(body)));
+      } catch (err) {
+        if (!(err instanceof ApiError)) throw err;
+        return Promise.resolve(
+          Response.json(
+            { statusCode: err.status, error: 'Error', message: err.message, field: err.field },
+            { status: err.status },
+          ),
+        );
+      }
+    }
     if (method === 'PUT' && path.startsWith('/checkins/')) {
       const before = (store[path] ?? fallback(path)) as { habits: Record<string, boolean> };
       const changes = body as { habits?: Record<string, boolean> };
@@ -63,7 +81,16 @@ export function stubApi(routes: Record<string, unknown> = {}) {
     return Promise.resolve(Response.json(path in store ? store[path] : fallback(path)));
   });
   vi.stubGlobal('fetch', fetchMock);
-  return { calls, writes: () => calls.filter((c) => c.method !== 'GET') };
+  return {
+    calls,
+    writes: () => calls.filter((c) => c.method !== 'GET'),
+    respond: (method: string, path: string, handler: (body: unknown) => unknown) => {
+      handlers.set(`${method} ${path}`, handler);
+    },
+    set: (path: string, value: unknown) => {
+      store[path] = value;
+    },
+  };
 }
 
 /** Renders inside the providers the app has: queries, router and toasts. */
