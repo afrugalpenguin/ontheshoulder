@@ -17,3 +17,7 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Skipped: stage 8 (Garmin sync). Depends on the stage 2 go or no-go; the import inbox routes exist and only store payloads
 - Shared test files are not typechecked by `tsc` (they are excluded from the shared build); Vitest still runs them
 - `corepack enable` has not been run on the dev PC, so `pnpm` is not on the path outside the pinned shim
+- Today and Week have no way to undo a logged session from the UI (the api supports deleting the activity)
+- Settings cannot add or delete habits, or edit session templates, yet; the api can
+- The theme override function still has no control in Settings
+- Lighthouse accessibility could run in CI against the Playwright servers

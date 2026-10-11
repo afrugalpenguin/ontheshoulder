@@ -41,3 +41,10 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 4. Scheduler is a one-minute `setInterval` with the handled week persisted in `app_state`, using the PC's local time. Settings live on the athlete row (`plan_weekday`, `plan_time`).
 - 2026-10-11: Stage 4. `suggestLoad` takes the slot's session history (most recent first) because the deload rule needs two sessions. A null increment means "next load the kit can make"; an increment that cannot be made holds.
 - 2026-10-11: Stage 4. A week no block covers is generated from fixtures alone, and the reasoning says so.
+- 2026-10-11: Stage 5. React Router 7, because version 8 needs React 19 and the stack is on React 18.
+- 2026-10-11: Stage 5. "Today" and prompt cut-off times come from the phone's clock; the wizard sends that week's Monday as the block start so the first generated week is the one the user is in.
+- 2026-10-11: Stage 5. The compliance line counts "key sessions" and "treadmill mornings" generically from the block's rules, so it reads the same for any template.
+- 2026-10-11: Stage 5. Session kind "icons" are short text badges, always next to the session name. No icon font or image assets.
+- 2026-10-11: Stage 5. Building the week by hand in the wizard creates one simple session template per row (kind, name, minutes). Richer templates are edited through the api for now.
+- 2026-10-11: Stage 5. Start on a walk routes to a `/timer/:id` placeholder until stage 6; Start on a run is disabled with "Recorded on your watch".
+- 2026-10-11: Stage 5. Lighthouse was run headless on the PC for the PR, not added to CI. The Playwright flow is in CI.
