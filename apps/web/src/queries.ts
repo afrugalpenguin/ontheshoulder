@@ -6,13 +6,16 @@ import type {
   Compliance,
   Equipment,
   Event,
+  Exercise,
   Fixture,
   GeneratedWeek,
   Habit,
   Metric,
+  ProgrammeDay,
   SessionTemplate,
   SetupStatus,
   StarterTemplate,
+  StrengthHistoryEntry,
   Week,
 } from '@ots/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +33,9 @@ export const keys = {
   blocks: ['blocks'] as const,
   templates: ['session-templates'] as const,
   starters: ['starters'] as const,
+  programmeDays: ['programme-days'] as const,
+  exercises: ['exercises'] as const,
+  dayHistory: (id: number) => ['programme-day-history', id] as const,
   week: (isoWeek: string) => ['week', isoWeek] as const,
   compliance: (isoWeek: string) => ['compliance', isoWeek] as const,
   checkin: (date: string) => ['checkin', date] as const,
@@ -77,6 +83,21 @@ export const useStarters = () =>
   useQuery({
     queryKey: keys.starters,
     queryFn: () => api<StarterTemplate[]>('GET', '/templates/starters'),
+  });
+
+export const useProgrammeDays = () =>
+  useQuery({
+    queryKey: keys.programmeDays,
+    queryFn: () => api<ProgrammeDay[]>('GET', '/programme-days'),
+  });
+
+export const useExercises = () =>
+  useQuery({ queryKey: keys.exercises, queryFn: () => api<Exercise[]>('GET', '/exercises') });
+
+export const useDayHistory = (id: number) =>
+  useQuery({
+    queryKey: keys.dayHistory(id),
+    queryFn: () => api<StrengthHistoryEntry[]>('GET', `/programme-days/${id}/history`),
   });
 
 export const useWeek = (isoWeek: string) =>
