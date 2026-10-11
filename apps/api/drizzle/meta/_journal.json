@@ -8,6 +8,13 @@
       "when": 1791729367190,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791730099579,
+      "tag": "0001_plan_schedule",
+      "breakpoints": true
     }
   ]
 }

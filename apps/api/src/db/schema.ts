@@ -28,6 +28,8 @@ export const athlete = sqliteTable('athlete', {
   units: text('units').$type<'metric'>().notNull().default('metric'),
   week_start: text('week_start').$type<'monday'>().notNull().default('monday'),
   timezone: text('timezone').notNull().default('UTC'),
+  plan_weekday: integer('plan_weekday').notNull().default(7),
+  plan_time: text('plan_time').notNull().default('21:00'),
 });
 
 export const event = sqliteTable('event', {
