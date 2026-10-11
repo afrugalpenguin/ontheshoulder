@@ -115,10 +115,10 @@ test('blocks: an overlapping block is refused, a following one is added', async 
 test('backups: back up now, then the download is on offer', async ({ page, request }) => {
   await seed(request);
   await page.goto('/settings');
-  await page.getByText('Data folder and backups').click();
+  await page.getByRole('region', { name: 'Data', exact: true }).locator('.section-toggle').click();
   await page.getByRole('button', { name: 'Back up now' }).click();
-  await expect(page.getByRole('status')).toContainText(/Saved ots-\d{8}-\d{4}\.db/);
-  await expect(page.getByLabel('Backup status')).toContainText('Last backup');
+  await expect(page.getByText(/^Saved ots-\d{8}-\d{4}\.db$/)).toBeVisible();
+  await expect(page.locator('dl[aria-label="Data folder"]')).not.toContainText('none yet');
   const link = page.getByRole('link', { name: 'Download latest backup' });
   await expect(link).toHaveAttribute('href', '/api/admin/backup/latest');
 

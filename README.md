@@ -35,7 +35,7 @@ To have it start by itself:
 
 ## Your data
 
-Everything lives in one folder outside the repo: `%LOCALAPPDATA%\ontheshoulder` on Windows, `~/.local/share/ontheshoulder` on Linux, or wherever `OTS_DATA_DIR` points. It holds the database, the newest 30 backups (one on every start and one each night) and the logs. Settings has buttons to back up now, download the latest backup, and export everything as JSON or CSV.
+Everything lives in one folder outside the repo: `%LOCALAPPDATA%\ontheshoulder` on Windows, `~/.local/share/ontheshoulder` on Linux, until you move it from Settings, Data. It holds the database, the newest 30 backups (one on every start and one each night) and the logs. Settings has buttons to back up now, download the latest backup, and export everything as JSON or CSV.
 
 The app only answers addresses on your own network. It has no accounts and no remote access, on purpose.
 

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "repository": "https://github.com/afrugalpenguin/ontheshoulder",
   "type": "module",
   "packageManager": "pnpm@10.34.6",
   "engines": {

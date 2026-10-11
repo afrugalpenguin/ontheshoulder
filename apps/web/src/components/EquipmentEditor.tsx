@@ -1,6 +1,6 @@
 import { achievableLoads, describeLoad, type Equipment, type EquipmentType } from '@ots/shared';
 import { useState } from 'react';
-import { Chip } from '../ui/index.js';
+import { Button, Chip } from '../ui/index.js';
 import { NumberField } from './NumberField.js';
 
 export const NO_EQUIPMENT: Equipment = {
@@ -65,16 +65,15 @@ function WeightChips(props: {
       </p>
       <div className="chips">
         {all.map((kg) => (
-          <button
+          <Button
             key={kg}
-            type="button"
             className="chip"
             aria-pressed={values.includes(kg)}
             aria-label={`${kg}kg ${noun}`}
             onClick={() => toggle(kg)}
           >
             {kg}
-          </button>
+          </Button>
         ))}
       </div>
       <div className="row">
@@ -87,12 +86,10 @@ function WeightChips(props: {
             onChange={(e) => setCustom(e.target.value)}
           />
         </label>
-        <button type="button" onClick={addCustom}>
-          Add
-        </button>
-        <button type="button" className="quiet" onClick={() => onChange([])}>
+        <Button onClick={addCustom}>Add</Button>
+        <Button variant="ghost" onClick={() => onChange([])}>
           No {noun}
-        </button>
+        </Button>
       </div>
     </fieldset>
   );
@@ -187,44 +184,33 @@ export function EquipmentEditor({ value, onChange }: Props) {
                 <span className="grow">
                   {p.kg}kg x {p.count} {p.count === 1 ? 'pair' : 'pairs'}
                 </span>
-                <button
-                  type="button"
-                  aria-label={`One pair of ${p.kg}kg fewer`}
-                  onClick={() => removePair(p.kg)}
-                >
+                <Button aria-label={`One pair of ${p.kg}kg fewer`} onClick={() => removePair(p.kg)}>
                   -
-                </button>
-                <button
-                  type="button"
-                  aria-label={`One more pair of ${p.kg}kg`}
-                  onClick={() => addPair(p.kg)}
-                >
+                </Button>
+                <Button aria-label={`One more pair of ${p.kg}kg`} onClick={() => addPair(p.kg)}>
                   +
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
         )}
         <div className="chips">
           {PLATE_CHOICES.map((kg) => (
-            <button
+            <Button
               key={kg}
-              type="button"
               className="chip"
               aria-label={`Add a pair of ${kg}kg plates`}
               onClick={() => addPair(kg)}
             >
               + {kg}
-            </button>
+            </Button>
           ))}
         </div>
         <div className="row">
-          <button type="button" onClick={addStandardSet}>
-            Add standard set
-          </button>
-          <button type="button" className="quiet" onClick={() => set({ plates: [] })}>
+          <Button onClick={addStandardSet}>Add standard set</Button>
+          <Button variant="ghost" onClick={() => set({ plates: [] })}>
             No plates
-          </button>
+          </Button>
         </div>
       </fieldset>
 

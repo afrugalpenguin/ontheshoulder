@@ -1,8 +1,9 @@
-import { openDb, resolveDataDir } from './client.js';
+import { currentDataDir } from '../config.js';
+import { openDb } from './client.js';
 
 // CLI entry for `pnpm --filter api db:vacuum`: reclaims free pages and
 // refreshes the query planner's statistics. Safe to run while the api is up.
-const dataDir = resolveDataDir();
+const dataDir = currentDataDir();
 const open = openDb(dataDir);
 try {
   open.sqlite.exec('vacuum');

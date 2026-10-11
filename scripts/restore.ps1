@@ -15,7 +15,9 @@
   The backup to restore. Defaults to the newest file in <data dir>\backups.
 
 .PARAMETER DataDir
-  The data folder. Defaults to OTS_DATA_DIR, else %LOCALAPPDATA%\ontheshoulder.
+  The data folder. Defaults to OTS_DATA_DIR, else the data_dir in the config
+  file (OTS_CONFIG, else %LOCALAPPDATA%\ontheshoulder\config.json), else
+  %LOCALAPPDATA%\ontheshoulder.
 
 .PARAMETER TargetPath
   Where to write the restored database. Defaults to <data dir>\ots.db (live).
@@ -40,7 +42,17 @@ $TaskName = 'OnTheShoulder Api'
 function Write-Step([string]$Message) { Write-Host "[restore] $Message" }
 
 if (-not $DataDir) {
-  $DataDir = if ($env:OTS_DATA_DIR) { $env:OTS_DATA_DIR } else { Join-Path $env:LOCALAPPDATA 'ontheshoulder' }
+  # The same order the api uses: environment, then the config file, then the default.
+  $configFile = if ($env:OTS_CONFIG) { $env:OTS_CONFIG } else { Join-Path $env:LOCALAPPDATA 'ontheshoulder\config.json' }
+  if ($env:OTS_DATA_DIR) {
+    $DataDir = $env:OTS_DATA_DIR
+  } elseif (Test-Path -LiteralPath $configFile -PathType Leaf) {
+    $DataDir = (Get-Content -LiteralPath $configFile -Raw | ConvertFrom-Json).data_dir
+    if (-not $DataDir) { throw "No data_dir in $configFile. Pass -DataDir." }
+    Write-Step "data folder from ${configFile}: $DataDir"
+  } else {
+    $DataDir = Join-Path $env:LOCALAPPDATA 'ontheshoulder'
+  }
 }
 $liveDb = Join-Path $DataDir 'ots.db'
 

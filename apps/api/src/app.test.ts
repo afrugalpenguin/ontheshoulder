@@ -58,12 +58,13 @@ describe('unknown routes', () => {
 
 describe('readConfig', () => {
   it('defaults to 0.0.0.0:3001', () => {
-    expect(readConfig({})).toEqual({
+    expect(readConfig({})).toMatchObject({
       host: '0.0.0.0',
       port: 3001,
       logLevel: 'info',
       lanGuard: true,
       logDir: null,
+      overrides: [],
     });
   });
 

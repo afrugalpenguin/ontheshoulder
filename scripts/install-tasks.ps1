@@ -52,8 +52,11 @@ function Register-OtsTask {
   }
 }
 
-# 1. The api at logon. No time limit; restart on failure after a minute.
-$apiCommand = "Set-Location '$apiDir'; & '$node' --env-file-if-exists=..\..\.env dist\server.js"
+# 1. The api at logon. No time limit. The command runs the api in a loop, so it
+# comes straight back after "Restart" in Settings (a clean exit) as well as
+# after a crash; stopping the task ends the loop. If the loop itself dies, the
+# task restarts after a minute.
+$apiCommand = "Set-Location '$apiDir'; while (`$true) { & '$node' --env-file-if-exists=..\..\.env dist\server.js; Start-Sleep -Seconds 2 }"
 $apiAction = New-ScheduledTaskAction -Execute 'powershell.exe' `
   -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"$apiCommand`"" `
   -WorkingDirectory $apiDir

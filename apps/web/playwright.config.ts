@@ -1,6 +1,6 @@
-import { mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { defineConfig } from '@playwright/test';
 
 // The flows run against a real api on a fresh database in a temp folder, and
@@ -9,11 +9,28 @@ import { defineConfig } from '@playwright/test';
 const API_PORT = process.env.OTS_E2E_API_PORT ?? '3183';
 const WEB_PORT = process.env.OTS_E2E_WEB_PORT ?? '5183';
 const dataDir = process.env.OTS_E2E_DATA_DIR ?? mkdtempSync(join(tmpdir(), 'ots-e2e-'));
+// The api gets its data folder from a config file, as an installed one does,
+// so the flow that moves the folder from Settings is the real thing. The file
+// sits beside the data folder, not in it. Tests read it through OTS_E2E_CONFIG.
+const configFile = join(dataDir, '..', `${basename(dataDir)}-config.json`);
+if (!existsSync(configFile)) {
+  writeFileSync(
+    configFile,
+    JSON.stringify({
+      data_dir: dataDir,
+      port: Number(API_PORT),
+      lan_guard: true,
+      log_level: 'info',
+    }),
+  );
+}
+process.env.OTS_E2E_CONFIG = configFile;
+process.env.OTS_E2E_DATA_DIR = dataDir;
 const env = {
-  OTS_DATA_DIR: dataDir,
+  OTS_CONFIG: configFile,
+  // The preview server's proxy reads the port from here.
   OTS_PORT: API_PORT,
   OTS_HOST: '127.0.0.1',
-  OTS_LOG_LEVEL: 'warn',
 };
 
 export default defineConfig({

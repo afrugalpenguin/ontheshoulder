@@ -7,7 +7,8 @@ Everything here uses three places:
 | What | Where |
 |---|---|
 | The code | wherever you cloned the repo |
-| Your data | the data folder: `%LOCALAPPDATA%\ontheshoulder` on Windows, `~/.local/share/ontheshoulder` on Linux, or wherever `OTS_DATA_DIR` points |
+| Your data | the data folder: `%LOCALAPPDATA%\ontheshoulder` on Windows, `~/.local/share/ontheshoulder` on Linux, unless you have moved it (Settings, Data shows where it is) |
+| Settings | the config file: `%LOCALAPPDATA%\ontheshoulder\config.json` on Windows, `~/.config/ontheshoulder/config.json` on Linux, or wherever `OTS_CONFIG` points |
 | Settings | an optional `.env` in the repo root; see `.env.example` |
 
 The data folder holds `ots.db` (the database), `backups\` and `logs\`. Nothing personal is ever written inside the repo.
@@ -72,7 +73,7 @@ Name, your A event, your kit, the week (start from the template or build by hand
 
 ## 2. Daily operation
 
-Nothing to do. The api starts at logon, takes a backup on start and at 02:00, and plans next week on Sunday at 21:00 (change the day and time in Settings, You).
+Nothing to do. The api starts at logon, takes a backup on start and at 02:00, and plans next week on Sunday at 21:00 (change the day and time in Settings, Athlete and events).
 
 Useful checks:
 
@@ -97,8 +98,40 @@ Database migrations run by themselves when the api starts. A backup is taken on 
 ### Settings you can change without touching code
 
 - Settings, Blocks and rules: the progression rules of each block as JSON. It checks them as you type, shows what changed against the saved version, and "Dry run next week" shows the week they would produce without saving anything.
-- Settings, Week shape: which session falls on which day and slot.
-- `.env` in the repo root: port, host, log level, data folder, log folder, LAN guard. Restart the api after changing it.
+- Settings, Fixtures: which session falls on which day and slot.
+- Settings, Data: where the data folder is (see "Move the data folder" below).
+- The config file: data folder, port, LAN guard, log level. Restart the api after changing it.
+
+### The config file
+
+The api reads `config.json` on every start and writes it with defaults the first time, so there is always one to look at:
+
+```
+{
+  "data_dir": "C:\\Users\\you\\AppData\\Local\\ontheshoulder",
+  "port": 3001,
+  "lan_guard": true,
+  "log_level": "info"
+}
+```
+
+- A key you leave out takes its default. A key it does not know, or a value of the wrong kind, stops the api at start with a message naming the key. It does not guess.
+- Environment variables still win over the file, for development and tests: `OTS_DATA_DIR`, `OTS_PORT`, `OTS_LAN_GUARD`, `OTS_LOG_LEVEL`. `OTS_HOST` and `OTS_LOG_DIR` exist only as environment variables. Settings, About, "Copy diagnostics" lists any that are overriding the file.
+- `OTS_CONFIG` points the api at a different config file.
+- `db:migrate`, `db:vacuum` and `scripts\restore.ps1` find the data folder the same way the api does.
+
+### Move the data folder
+
+In Settings, Data, "Change folder":
+
+1. Type the full path of a folder on this PC. A network share (`\\server\share`), a folder inside the app's own code, and a folder that already holds an `ots.db` are refused, with the reason.
+2. The api copies the database (with SQLite's online backup, safe while the app is in use), opens the copy and checks every table has the same number of rows, copies the backups, and only then points the config file at the new folder.
+3. It leaves a `MOVED-<date>.txt` in the old folder saying where the data went. Nothing in the old folder is deleted; remove it yourself once you are happy.
+4. Settings shows "Restart required". The app keeps using the old folder until it restarts. "Restart now" ends the api and the scheduled task starts it again a couple of seconds later, on the new folder. Run with `pnpm dev` there is no task to do that, so the page tells you to restart by hand.
+
+If any step fails, the config file is not changed, the half-made copy is removed, the error is shown, and the app carries on with the old folder. The steps are in the log (`data folder move: ...`).
+
+Anything logged between the copy and the restart is in the old folder only, so restart straight after moving.
 
 ## 3. When Garmin sync goes red
 
@@ -113,7 +146,7 @@ To stop the red strip altogether, remove the task: `Unregister-ScheduledTask -Ta
 
 ## 4. Restore a backup
 
-Backups are in `<data folder>\backups`, named `ots-YYYYMMDD-HHmm.db`, the newest 30 kept. You can also download the latest from Settings, Data folder and backups.
+Backups are in `<data folder>\backups`, named `ots-YYYYMMDD-HHmm.db`, the newest 30 kept. You can also download the latest from Settings, Data.
 
 Check a backup opens, without touching anything live:
 
@@ -137,7 +170,7 @@ Linux: stop the service, copy the backup over `ots.db` (remove `ots.db-wal` and 
 
 ## 5. Move the database to a new machine
 
-1. On the old machine, in Settings, Data folder and backups: "Back up now", then "Download latest backup". Or copy the newest file from `backups\`.
+1. On the old machine, in Settings, Data: "Back up now", then "Download latest backup". Or copy the newest file from `backups\`.
 2. On the new machine, do part 1 as far as `pnpm build`. Do not run setup.
 3. Put the backup in place:
 
@@ -149,10 +182,10 @@ Linux: stop the service, copy the backup over `ots.db` (remove `ots.db-wal` and 
 4. Start the api (`.\scripts\install-tasks.ps1`, then start the task). It opens the database, applies any newer migrations and carries on where the old machine left off. Setup does not appear, because the data is already there.
 5. Give the phone the new address.
 
-To leave the app altogether, Settings, Export gives you everything as JSON and each table as CSV.
+To leave the app altogether, Settings, Data has an Export part that gives you everything as JSON and each table as CSV.
 
 ## Security notes
 
-- The api only answers loopback and private (LAN) addresses and returns 403 to anything else. `OTS_LAN_GUARD=false` turns that off; do not, unless you know why.
+- The api only answers loopback and private (LAN) addresses and returns 403 to anything else. `"lan_guard": false` in the config file (or `OTS_LAN_GUARD=false`) turns that off; do not, unless you know why.
 - There are no accounts and no passwords. Anyone on your home network can open it. Do not forward its port on the router.
 - It is plain http. That is why there is no installable app and why the screen may sleep during a timed walk; see `docs/BACKLOG.md` for the HTTPS option.

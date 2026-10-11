@@ -14,6 +14,7 @@ import { api, errorText } from '../api.js';
 import { hasChanges, lineDiff } from '../lib/diff.js';
 import { longDate, shortDate, targetText } from '../lib/format.js';
 import { keys } from '../queries.js';
+import { Button } from '../ui/index.js';
 
 const pretty = (rules: unknown) => JSON.stringify(rules ?? {}, null, 2);
 
@@ -105,12 +106,12 @@ function BlockForm({ block, onDone }: { block: Block | null; onDone: () => void 
         </p>
       )}
       <div className="row">
-        <button type="submit" className="primary grow" disabled={save.isPending}>
+        <Button type="submit" variant="primary" className="grow" disabled={save.isPending}>
           {block ? 'Save block' : 'Add block'}
-        </button>
-        <button type="button" className="quiet" onClick={onDone}>
+        </Button>
+        <Button variant="ghost" onClick={onDone}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -181,25 +182,23 @@ export function RulesEditor({ block, today }: { block: Block; today: string }) {
       )}
 
       <div className="row wrap">
-        <button
-          type="button"
+        <Button
           disabled={!checked.ok || dryRun.isPending}
           onClick={() => checked.ok && dryRun.mutate(checked.rules)}
         >
           Dry run next week
-        </button>
-        <button
-          type="button"
-          className="primary"
+        </Button>
+        <Button
+          variant="primary"
           disabled={!checked.ok || !changed || save.isPending}
           onClick={() => checked.ok && save.mutate(checked.rules)}
         >
           Save rules
-        </button>
+        </Button>
         {changed && (
-          <button type="button" className="quiet" onClick={() => setText(saved)}>
+          <Button variant="ghost" onClick={() => setText(saved)}>
             Discard changes
-          </button>
+          </Button>
         )}
       </div>
       {(save.isError || dryRun.isError) && (
@@ -281,37 +280,30 @@ export function BlocksSection({ blocks, today }: { blocks: Block[]; today: strin
                   </span>
                 </div>
                 <div className="row wrap">
-                  <button
-                    type="button"
-                    aria-label={`Edit ${b.name}`}
-                    onClick={() => setEditing(b.id)}
-                  >
+                  <Button aria-label={`Edit ${b.name}`} onClick={() => setEditing(b.id)}>
                     Edit
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
                     aria-label={`Rules for ${b.name}`}
                     aria-expanded={rulesFor === b.id}
                     onClick={() => setRulesFor(rulesFor === b.id ? null : b.id)}
                   >
                     Rules
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
                     aria-label={`Move ${b.name} earlier`}
                     disabled={index === 0 || reorder.isPending}
                     onClick={() => move(index, -1)}
                   >
                     Earlier
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
                     aria-label={`Move ${b.name} later`}
                     disabled={index === blocks.length - 1 || reorder.isPending}
                     onClick={() => move(index, 1)}
                   >
                     Later
-                  </button>
+                  </Button>
                 </div>
                 {rulesFor === b.id && <RulesEditor key={b.id} block={b} today={today} />}
               </>
@@ -327,9 +319,7 @@ export function BlocksSection({ blocks, today }: { blocks: Block[]; today: strin
       {editing === 'new' ? (
         <BlockForm block={null} onDone={() => setEditing(null)} />
       ) : (
-        <button type="button" onClick={() => setEditing('new')}>
-          Add a block
-        </button>
+        <Button onClick={() => setEditing('new')}>Add a block</Button>
       )}
     </>
   );
