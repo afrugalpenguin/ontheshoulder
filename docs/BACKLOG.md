@@ -30,3 +30,8 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Trends: the last bar of the volume chart sits against the right edge; give the x scale some padding
 - Trends: B and C event markers on the charts (SPEC 5.1 mentions them on Trends) are not drawn yet; they are on Week
 - Trends: the charts have text legends with latest values but no way to read off an earlier point
+- The scheduled-task scripts have only been run with `-WhatIf`; they have not registered real tasks or been through a reboot
+- CI runs the personal-data check, but it checks nothing there until an `OTS_PERSONAL_TERMS` repository secret is added
+- Linux install (systemd unit, restore steps) is written from the Windows build and has not been run on Linux
+- `restore.ps1` has no Linux counterpart script; the runbook gives the manual steps
+- The first chart request loads the rules validator with the main bundle (about 10 kB gzipped more); it could load with Settings instead

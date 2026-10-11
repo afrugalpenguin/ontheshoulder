@@ -65,3 +65,12 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 9. "Main lifts" are slots on the linear rule; the chart shows the two with the most history. A substitute set counts under the exercise actually done.
 - 2026-10-11: Stage 9. The review card compares the current ISO week with the one before using fixed sentences and no judgement words.
 - 2026-10-11: Stage 9. Request bodies are no longer type-coerced (only query strings and path parameters are), because coercion turned a real 0 into null in nullable fields.
+- 2026-10-11: Stage 10. Every api route is under `/api` in every mode, dev included; the dev proxy no longer rewrites paths. `/health` is now `/api/health`.
+- 2026-10-11: Stage 10. The LAN guard allows loopback and RFC 1918 addresses plus their IPv6 counterparts (`::1`, unique local, link-local). Carrier-grade NAT and 169.254 addresses are refused. `OTS_LAN_GUARD` must be exactly `true` or `false`; anything else stops the api from starting so a typo cannot switch the guard off.
+- 2026-10-11: Stage 10. Backups run on start and when the clock passes 02:00 (checked each minute); a start after 02:00 counts as that night's. Only files named `ots-YYYYMMDD-HHmm.db` are pruned.
+- 2026-10-11: Stage 10. The Garmin sync task is only registered with `-IncludeGarmin`, because the sidecar was not built. All three PowerShell scripts support `-WhatIf` or `-Force` so they can be checked without changing the PC.
+- 2026-10-11: Stage 10. Reordering blocks lays them back to back from the earliest start, each keeping its length. Creating or editing a block that overlaps another is refused with 409.
+- 2026-10-11: Stage 10. A dry run uses the same engine as generation with nothing written, and accepts unsaved rules so the editor can try them first.
+- 2026-10-11: Stage 10. The rolling log file goes in `<data folder>/logs` unless `OTS_LOG_DIR` is set.
+- 2026-10-11: Stage 10. The personal-data check skips `LICENSE`, where the copyright holder's name belongs, and can take its terms from a CI secret (`OTS_PERSONAL_TERMS`) as well as the local `.personal-terms` file.
+- 2026-10-11: Stage 10. A systemd user unit is provided for Linux alongside the Windows scripts.
