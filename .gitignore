@@ -1,0 +1,36 @@
+# node
+node_modules/
+dist/
+build/
+.vite/
+*.tsbuildinfo
+coverage/
+
+# env and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# data (the SQLite file lives outside the repo; see docs/SPEC.md)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backups/
+
+# garmin sidecar
+services/garmin/.venv/
+services/garmin/__pycache__/
+services/garmin/tokens/
+**/garmin_tokens.json
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.log
