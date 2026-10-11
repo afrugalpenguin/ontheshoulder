@@ -53,3 +53,9 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 6. Sessions with run and walk blocks get warm-up, repeats and cool-down; every other session is one stretch with a half-way cue. Start is offered on walks only, so the interval form is reachable by URL but not from a run card.
 - 2026-10-11: Stage 6. `RestTimer` restarts when its `resetKey` prop changes; a skip calls `onDone` without the finish tone.
 - 2026-10-11: Stage 6. End-to-end flows run against the built bundle through `vite preview`, with the same `/api` proxy as dev.
+- 2026-10-11: Stage 7. A set records `exercise_id` only when a substitute was done. A substitute keeps its own history and starting load; making a swap permanent labels the slot's earlier sets with the old exercise first.
+- 2026-10-11: Stage 7. A substitute that is not a barbell lift steps to the next load the kit can make, whatever the slot's increment was.
+- 2026-10-11: Stage 7. Tapping a logged set undoes it. Holding a set row, the context menu, or the Adjust button all open the same editor, so nothing depends on a long press working.
+- 2026-10-11: Stage 7. The session is held in memory until Finish; a partial session is whatever has been logged when Finish is pressed.
+- 2026-10-11: Stage 7. Strength sessions are dated today and linked to today's planned session for that day if there is one, else the first open one this week.
+- 2026-10-11: Stage 7. The starter template's library gained twelve same-pattern alternatives (dumbbell, kettlebell and bodyweight) so substitution has something to offer. A carry has no bodyweight alternative, so that slot can say none available.

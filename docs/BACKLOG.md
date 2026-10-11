@@ -24,3 +24,6 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Timer on plain LAN http: the Screen Wake Lock API needs a secure context, so the screen is not kept awake, and a locked phone suspends page timers so cues sound on unlock. HTTPS on the LAN (mkcert, above) fixes the wake lock
 - Timer on iOS Safari: no Vibration API; audio only starts after a tap and is cut when the page is backgrounded or the ring switch is on silent; wake lock needs iOS 16.4 or later and HTTPS. Not worked around
 - Timer state is in memory only: reloading the page mid-session loses it
+- Strength session state is in memory: leaving the screen before Finish loses the sets logged so far
+- Timed and carried sets are logged with reps of 1; a seconds or distance field per set would be truer
+- Applying the starter template to a database set up before stage 7 adds the new alternative exercises (re-run apply-template); nothing does that automatically
