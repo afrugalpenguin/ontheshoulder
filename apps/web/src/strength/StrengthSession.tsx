@@ -109,7 +109,7 @@ export function SessionScreen({
           </ul>
         </section>
         <Link className="button primary" to="/">
-          Back to Today
+          Back to Week
         </Link>
       </main>
     );

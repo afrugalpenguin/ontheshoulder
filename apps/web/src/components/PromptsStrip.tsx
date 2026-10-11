@@ -1,4 +1,5 @@
 import type { Habit } from '@ots/shared';
+import { Button } from '../ui/index.js';
 
 interface Props {
   prompts: Habit[];
@@ -14,22 +15,16 @@ export function PromptsStrip({ prompts, onDone, onDismiss }: Props) {
       {prompts.map((h) => (
         <div key={h.key} className="prompt">
           <span className="grow prompt-text">{h.prompt_text}</span>
-          <button
-            type="button"
-            className="primary"
-            aria-label={`Done: ${h.label}`}
-            onClick={() => onDone(h.key)}
-          >
+          <Button variant="primary" aria-label={`Done: ${h.label}`} onClick={() => onDone(h.key)}>
             Done
-          </button>
-          <button
-            type="button"
-            className="quiet"
+          </Button>
+          <Button
+            variant="ghost"
             aria-label={`Not today: ${h.label}`}
             onClick={() => onDismiss(h.key)}
           >
             Not today
-          </button>
+          </Button>
         </div>
       ))}
     </section>

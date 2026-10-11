@@ -7,56 +7,59 @@ import {
 } from '@ots/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { api, errorText } from '../api.js';
+import { buildActivity, logDefaults, primaryAction } from '../lib/activity.js';
 import { KIND_BADGE, KIND_LABEL, STATUS_LABEL, targetText } from '../lib/format.js';
 import { useRefreshWeek } from '../queries.js';
+import { unlockAudio } from '../timer/cues.js';
+import { Button, ButtonLink, Chip, Sheet, useToast } from '../ui/index.js';
 import { LogForm } from './LogForm.js';
 
-type Mode = 'idle' | 'log' | 'skip';
+type Open = 'none' | 'more' | 'log' | 'skip';
 
-/** Where Start goes for a session, or why there is nowhere to go. */
-function startTarget(session: WeekSession): { to: string } | { hint: string } | null {
-  switch (session.template.kind) {
-    case 'walk_vest':
-    case 'walk':
-      return { to: `/timer/${session.id}` };
-    case 'strength':
-      return {
-        to: session.template.programme_day_id
-          ? `/strength/day/${session.template.programme_day_id}`
-          : '/strength',
-      };
-    case 'run':
-      return { hint: 'Recorded on your watch' };
-    default:
-      return null;
-  }
+/** Where Start goes: the timer for a walk, the session screen for strength. */
+function startTarget(session: WeekSession): string {
+  if (session.template.kind !== 'strength') return `/timer/${session.id}`;
+  return session.template.programme_day_id
+    ? `/strength/day/${session.template.programme_day_id}`
+    : '/strength';
 }
 
-/** A planned session with its actions: Log, Skip and Start. */
+/**
+ * A planned session. One primary button, whose label depends on the kind of
+ * session (Start, Log or Done), and a small overflow for Skip and Edit.
+ */
 export function SessionCard({ session }: { session: WeekSession }) {
-  const [mode, setMode] = useState<Mode>('idle');
+  const [open, setOpen] = useState<Open>('none');
   const refreshWeek = useRefreshWeek();
-  const done = () => {
-    setMode('idle');
+  const toast = useToast();
+  const { template, status } = session;
+  const refresh = () => {
+    setOpen('none');
     return refreshWeek(isoWeekOf(session.date));
   };
 
   const log = useMutation({
     mutationFn: (activity: ActivityInput) => api('POST', '/activities', activity),
-    onSuccess: done,
+    onSuccess: () => {
+      toast(`${template.name} logged`);
+      return refresh();
+    },
   });
   const patch = useMutation({
     mutationFn: (changes: { status: 'skipped' | 'planned'; skip_reason: SkipReason | null }) =>
       api('PATCH', `/planned-sessions/${session.id}`, changes),
-    onSuccess: done,
+    onSuccess: refresh,
+  });
+  const undo = useMutation({
+    mutationFn: () => api('DELETE', `/activities/${session.linked_activity_id}`),
+    onSuccess: refresh,
   });
 
-  const { template, status } = session;
   const target = targetText(session);
-  const start = startTarget(session);
-  const open = status === 'planned' || status === 'modified';
+  const action = primaryAction(template.kind);
+  const pending = status === 'planned' || status === 'modified';
+  const failure = [patch, undo].find((m) => m.isError);
 
   return (
     <article className={`card session status-${status}`} aria-label={template.name}>
@@ -77,77 +80,98 @@ export function SessionCard({ session }: { session: WeekSession }) {
         </div>
       </header>
 
-      {mode === 'idle' && open && (
+      {pending && (
         <div className="row actions">
-          <button type="button" className="primary grow" onClick={() => setMode('log')}>
-            Log
-          </button>
-          <button type="button" className="grow" onClick={() => setMode('skip')}>
-            Skip
-          </button>
-          {start && 'to' in start && (
-            <Link className="button grow" to={start.to}>
+          {action === 'start' && (
+            <ButtonLink
+              variant="primary"
+              className="grow"
+              to={startTarget(session)}
+              state={{ autostart: true }}
+              // The tap that starts the timer is the one that lets it play its cues.
+              onClick={unlockAudio}
+            >
               Start
-            </Link>
+            </ButtonLink>
           )}
-          {start && 'hint' in start && (
-            <button type="button" className="grow" disabled aria-describedby={`hint-${session.id}`}>
-              Start
-            </button>
+          {action === 'log' && (
+            <Button variant="primary" className="grow" onClick={() => setOpen('log')}>
+              Log
+            </Button>
           )}
-        </div>
-      )}
-      {mode === 'idle' && open && start && 'hint' in start && (
-        <p className="muted hint" id={`hint-${session.id}`}>
-          {start.hint}
-        </p>
-      )}
-
-      {mode === 'idle' && status === 'skipped' && (
-        <div className="row actions">
-          <button
-            type="button"
-            className="quiet"
-            onClick={() => patch.mutate({ status: 'planned', skip_reason: null })}
+          {action === 'done' && (
+            <Button
+              variant="primary"
+              className="grow"
+              loading={log.isPending}
+              onClick={() => log.mutate(buildActivity(session, logDefaults(session)))}
+            >
+              Done
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            className="more"
+            aria-label={`More for ${template.name}`}
+            aria-expanded={open === 'more'}
+            onClick={() => setOpen(open === 'more' ? 'none' : 'more')}
           >
-            Undo skip
-          </button>
+            <span aria-hidden="true">...</span>
+          </Button>
+        </div>
+      )}
+      {pending && open === 'more' && (
+        <div className="row">
+          <Button className="grow" onClick={() => setOpen('skip')}>
+            Skip
+          </Button>
+          <Button className="grow" onClick={() => setOpen('log')}>
+            Edit
+          </Button>
         </div>
       )}
 
-      {mode === 'log' && (
+      {status === 'skipped' && (
+        <Button
+          variant="ghost"
+          loading={patch.isPending}
+          onClick={() => patch.mutate({ status: 'planned', skip_reason: null })}
+        >
+          Undo skip
+        </Button>
+      )}
+      {status === 'done' && session.linked_activity_id != null && (
+        <Button variant="ghost" loading={undo.isPending} onClick={() => undo.mutate()}>
+          Undo
+        </Button>
+      )}
+
+      <Sheet open={open === 'log'} title={`Log ${template.name}`} onClose={() => setOpen('none')}>
         <LogForm
           session={session}
           busy={log.isPending}
           error={log.isError ? errorText(log.error) : null}
           onSubmit={(activity) => log.mutate(activity)}
-          onCancel={() => setMode('idle')}
         />
-      )}
+      </Sheet>
 
-      {mode === 'skip' && (
-        <div className="skip" role="group" aria-label="Why skip?">
-          <p>Why skip?</p>
-          <div className="chips">
-            {SKIP_REASONS.map((reason) => (
-              <button
-                key={reason}
-                type="button"
-                className="chip"
-                onClick={() => patch.mutate({ status: 'skipped', skip_reason: reason })}
-              >
-                {reason}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="quiet" onClick={() => setMode('idle')}>
-            Cancel
-          </button>
+      <Sheet open={open === 'skip'} title="Why skip?" onClose={() => setOpen('none')}>
+        <div className="chips">
+          {SKIP_REASONS.map((reason) => (
+            <Chip
+              key={reason}
+              disabled={patch.isPending}
+              onClick={() => patch.mutate({ status: 'skipped', skip_reason: reason })}
+            >
+              {reason}
+            </Chip>
+          ))}
         </div>
-      )}
-      {patch.isError && (
+      </Sheet>
+
+      {failure && (
         <p role="alert" className="error">
-          {errorText(patch.error)}
+          {errorText(failure.error)}
         </p>
       )}
     </article>

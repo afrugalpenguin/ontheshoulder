@@ -30,15 +30,14 @@ test('vest walk: 60 minutes with a 10 minute gap, half-way cue state, saved acti
   await seed(request);
   await page.clock.install({ time: WEDNESDAY_7AM });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Wednesday 8 January' })).toBeVisible();
-
-  const walk = page.getByRole('article', { name: 'Vest walk' });
+  const wednesday = page.getByRole('region', { name: 'Wednesday 8 Jan' });
+  const walk = wednesday.getByRole('article', { name: 'Vest walk' });
+  // Start on the card is the only Start: the timer is already running when it opens.
   await walk.getByRole('link', { name: 'Start' }).click();
   await expect(page.getByRole('heading', { name: 'Vest walk' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden();
-  await expect(page.getByRole('timer')).toHaveText('60:00');
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start' }).click();
   await page.clock.fastForward('25:00');
   await expect(page.getByRole('timer')).toHaveText('35:00');
 
@@ -60,10 +59,9 @@ test('vest walk: 60 minutes with a 10 minute gap, half-way cue state, saved acti
   await expect(form).toContainText('20kg');
   await form.getByRole('radio', { name: 'RPE 3' }).click();
   await form.getByLabel('Notes').fill('timed in the browser test');
-  await form.getByRole('button', { name: 'Save and finish' }).click();
+  await form.getByRole('button', { name: 'Finish' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Wednesday 8 January' })).toBeVisible();
-  await expect(page.getByRole('article', { name: 'Vest walk' })).toContainText('Done');
+  await expect(wednesday.getByRole('article', { name: 'Vest walk' })).toContainText('Done');
 
   const activities = await (
     await request.get(`${API}/activities?from=2031-01-08&to=2031-01-08&kind=walk_vest`)
@@ -100,7 +98,7 @@ test('rest timer demo: 30 second rest cues at 10 seconds left and at zero', asyn
   await page.clock.runFor(10_000);
   await expect(log).toContainText('Cue: rest over');
   await expect(log).toContainText('onDone called');
-  await expect(page.getByRole('status')).toHaveText('Rest over');
+  await expect(page.getByText('Rest over', { exact: true })).toBeVisible();
 
   // Logging the next set resets the rest to full.
   await page.getByRole('button', { name: 'Log the next set (resets the rest)' }).click();

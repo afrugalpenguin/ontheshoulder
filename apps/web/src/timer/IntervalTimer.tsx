@@ -21,6 +21,8 @@ interface Props {
   plan: TimerPlan;
   onFinish: (summary: TimerSummary) => void;
   cue?: CuePlayer;
+  /** Start counting at once, for when the tap that opened the timer was the Start. */
+  autostart?: boolean;
 }
 
 interface WakeLockSentinelLike {
@@ -69,8 +71,10 @@ const RING_R = 54;
 const RING_C = 2 * Math.PI * RING_R;
 
 /** Full-screen interval timer driven by the pure state machine. */
-export function IntervalTimer({ title, plan, onFinish, cue = playCue }: Props) {
-  const [state, setState] = useState<TimerState>(() => createTimer(plan));
+export function IntervalTimer({ title, plan, onFinish, cue = playCue, autostart }: Props) {
+  const [state, setState] = useState<TimerState>(() =>
+    autostart ? start(createTimer(plan), performance.now()) : createTimer(plan),
+  );
   const [now, setNow] = useState(() => performance.now());
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -124,7 +128,7 @@ export function IntervalTimer({ title, plan, onFinish, cue = playCue }: Props) {
     return (
       <main className="timer">
         <h1>{title}</h1>
-        <p className="muted">This session has no duration to time. Log it from Today instead.</p>
+        <p className="muted">This session has no duration to time. Log it from Week instead.</p>
       </main>
     );
   }
