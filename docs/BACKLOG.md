@@ -21,3 +21,6 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Settings cannot add or delete habits, or edit session templates, yet; the api can
 - The theme override function still has no control in Settings
 - Lighthouse accessibility could run in CI against the Playwright servers
+- Timer on plain LAN http: the Screen Wake Lock API needs a secure context, so the screen is not kept awake, and a locked phone suspends page timers so cues sound on unlock. HTTPS on the LAN (mkcert, above) fixes the wake lock
+- Timer on iOS Safari: no Vibration API; audio only starts after a tap and is cut when the page is backgrounded or the ring switch is on silent; wake lock needs iOS 16.4 or later and HTTPS. Not worked around
+- Timer state is in memory only: reloading the page mid-session loses it

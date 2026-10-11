@@ -48,3 +48,8 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 5. Building the week by hand in the wizard creates one simple session template per row (kind, name, minutes). Richer templates are edited through the api for now.
 - 2026-10-11: Stage 5. Start on a walk routes to a `/timer/:id` placeholder until stage 6; Start on a run is disabled with "Recorded on your watch".
 - 2026-10-11: Stage 5. Lighthouse was run headless on the PC for the PR, not added to CI. The Playwright flow is in CI.
+- 2026-10-11: Stage 6. Timer position is computed from elapsed time on `performance.now`; a tick that covers more than 1.5 seconds is treated as a resume and issues only the latest transition cue.
+- 2026-10-11: Stage 6. Skipped time is kept out of the total. The saved activity records planned and actual seconds per phase under `detail.timer`.
+- 2026-10-11: Stage 6. Sessions with run and walk blocks get warm-up, repeats and cool-down; every other session is one stretch with a half-way cue. Start is offered on walks only, so the interval form is reachable by URL but not from a run card.
+- 2026-10-11: Stage 6. `RestTimer` restarts when its `resetKey` prop changes; a skip calls `onDone` without the finish tone.
+- 2026-10-11: Stage 6. End-to-end flows run against the built bundle through `vite preview`, with the same `/api` proxy as dev.

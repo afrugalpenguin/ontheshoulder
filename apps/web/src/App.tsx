@@ -1,4 +1,4 @@
-import { NavLink, Navigate, Route, Routes } from 'react-router';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router';
 import { errorText } from './api.js';
 import { Placeholder } from './pages/Placeholder.js';
 import { Settings } from './pages/Settings.js';
@@ -6,6 +6,8 @@ import { Today } from './pages/Today.js';
 import { Week } from './pages/Week.js';
 import { useSetupStatus } from './queries.js';
 import { SetupWizard } from './setup/SetupWizard.js';
+import { RestDemo } from './timer/RestDemo.js';
+import { TimerPage } from './timer/TimerPage.js';
 
 const TABS = [
   { to: '/', label: 'Today' },
@@ -29,6 +31,9 @@ function TabBar() {
 
 export function App() {
   const status = useSetupStatus();
+  const { pathname } = useLocation();
+  // The interval timer takes the whole screen.
+  const fullScreen = pathname.startsWith('/timer/') && pathname !== '/timer/rest-demo';
 
   if (status.isPending) {
     return (
@@ -76,19 +81,12 @@ export function App() {
             />
           }
         />
-        <Route
-          path="/timer/:sessionId"
-          element={
-            <Placeholder
-              title="Timer"
-              note="The interval timer arrives in a later stage. Log the session from Today for now."
-            />
-          }
-        />
+        <Route path="/timer/rest-demo" element={<RestDemo />} />
+        <Route path="/timer/:sessionId" element={<TimerPage />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <TabBar />
+      {!fullScreen && <TabBar />}
     </>
   );
 }
