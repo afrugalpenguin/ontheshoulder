@@ -1,5 +1,7 @@
 # Review: stages 3 to 10
 
+**v1.0.0 landed 2026-10-11.** #10, #12, #14, #18 and #20 are merged in that order and `main` is tagged `v1.0.0`. The "Open" lines below are as written before the landing.
+
 Written 2026-10-11 after an unattended run. Stages 2 and 8 (Garmin) were skipped: they need an interactive login and MFA code. Every stage's PR lists its acceptance criteria with the output that proves each ticked one.
 
 ## Look at these first
@@ -7,7 +9,7 @@ Written 2026-10-11 after an unattended run. Stages 2 and 8 (Garmin) were skipped
 1. **Merge order.** #10, #12, #14, #18 and #20 are stacked, each containing the one before. All have green CI and merge cleanly. Merging #20 alone brings in everything; merging them in order keeps one merge per stage.
 2. **A bug found on the way.** A 0 in any nullable field (an ankle score of 0) was saved as "nothing entered". In `main` since stage 3, found by the stage 9 tests, fixed and merged on its own as #17.
 3. **`/health` is now `/api/health`** (stage 10), and the api will not start if `OTS_LAN_GUARD` is anything but `true` or `false`.
-4. **`docs/prompts/`** describes how the project was built and names the tool, which kickoff rule 4 forbids. I left it: it is yours to keep, move or delete before going public.
+4. **`docs/prompts/`** is now `docs/build/`, with the tool name removed from its README (stage 11).
 5. **Still only on this PC, never push:** branches `backup/main-pre-squash`, `backup/feat-scaffold-pre-squash`, `docs/spec-v0.2` and `docs/spec-v0.2.1` contain the race specifics. Also local: a gitignored `.personal-terms` I created for the personal-data check; add your own terms.
 6. **Not done on the PC:** `corepack enable`, registering the scheduled tasks, any firewall change, a reboot.
 

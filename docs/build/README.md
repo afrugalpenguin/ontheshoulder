@@ -1,6 +1,6 @@
-# Build prompts
+# Build briefs
 
-Each file is a self-contained prompt for one Claude Code session. Hand them over in order. Each ends with acceptance criteria and the commands that prove them; a stage is not done until those commands have been run and their output shown.
+These are the staged build briefs the project was constructed from: one file per stage, worked through in order, each a self-contained brief ending with acceptance criteria and the commands that prove them. A stage is not done until those commands have been run and their output shown. The v1 stages are in this folder and the v1.1 stages are in `v1.1/`.
 
 Paste `00-kickoff.md` at the top of every session.
 

@@ -133,7 +133,7 @@ Later blocks add a third run, back-to-back long runs, and continuous long runs. 
 
 ## 7. Garmin (optional, stage 8, last)
 
-Unchanged in intent from v0.1 but demoted: the app ships complete without it. If built, it pulls sleep, HRV, resting HR, body battery and training readiness into BodyMetric and imports activities for after-the-fact linking to planned runs. It fails closed on any auth problem and shows its status on Today. Details stay in `docs/prompts/08-garmin-sync.md`. The verification spike is still worth doing early because it is cheap and decides whether stage 8 exists.
+Unchanged in intent from v0.1 but demoted: the app ships complete without it. If built, it pulls sleep, HRV, resting HR, body battery and training readiness into BodyMetric and imports activities for after-the-fact linking to planned runs. It fails closed on any auth problem and shows its status on Today. Details stay in `docs/build/08-garmin-sync.md`. The verification spike is still worth doing early because it is cheap and decides whether stage 8 exists.
 
 ## 8. Web app
 

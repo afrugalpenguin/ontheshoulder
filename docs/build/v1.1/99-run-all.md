@@ -2,7 +2,7 @@
 
 Paste `../00-kickoff.md`, then this.
 
-Run stages 11, 12, 13, 14, 15 from docs/prompts/v1.1/ in order, unattended.
+Run stages 11, 12, 13, 14, 15 from docs/build/v1.1/ in order, unattended.
 
 Stage 11 is housekeeping on main: do it exactly as written, including the tag.
 

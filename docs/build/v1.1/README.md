@@ -1,6 +1,6 @@
-# v1.1 prompts
+# v1.1 briefs
 
-v1 exists and has been used. These prompts fix what using it showed. Same rules as `../00-kickoff.md`; paste it first in every session.
+v1 exists and has been used. These briefs fix what using it showed. Same rules as `../00-kickoff.md`; paste it first in every session.
 
 | Stage | File | Branch | What it fixes |
 |---|---|---|---|
