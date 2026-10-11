@@ -36,7 +36,11 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - The first chart request loads the rules validator with the main bundle (about 10 kB gzipped more); it could load with Settings instead
 - A done session can be undone but not edited from Week; editing needs a sheet that patches the activity
 - Check-in is only on today's row; a missed day cannot be filled in afterwards from Week
-- `ScoreRow` and `NumberField` are still used by the strength slot card and the kit editor; stages 14 and 15 replace them with the primitives
+- `NumberField` is still used by the kit editor; stage 15 replaces it with the primitives
 - The demo page screenshots in `docs/screenshots` are taken by hand; nothing regenerates them
 - `docs/SPEC.md` 6.3 still describes the run-walk ladder as the Block 1 default, and 5.2 and 5.3 list run fields the log sheet no longer asks for; bring the spec in line with v1.1
 - Run minutes on Week count every run activity in the week, linked to a planned session or not
+- Warm-ups can be switched off for all linear slots at once (Settings) or per slot through the api; there is no per-slot switch in the UI
+- Notes on a programme slot (for example "each leg") are no longer shown on the session screen; decide where they belong
+- The old `RestTimer` is now used only by the rest demo page at `/timer/rest-demo`
+- Per-set RPE and notes can no longer be entered (by design); the columns remain in `set_log`
