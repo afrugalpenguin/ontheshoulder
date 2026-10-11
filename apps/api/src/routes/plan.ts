@@ -1,6 +1,8 @@
 import {
   Block,
   BlockInput,
+  Compliance,
+  GeneratedWeek,
   IsoWeek,
   PlannedSession,
   PlannedSessionInput,
@@ -10,11 +12,13 @@ import {
   isIsoDate,
   isIsoWeek,
   isoWeekOf,
+  validateRules,
 } from '@ots/shared';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { Type } from 'typebox';
 import { block, planned_session, session_template } from '../db/schema.js';
 import { badRequest } from '../errors.js';
+import { generateWeekPlan, weekCompliance } from '../plan/generate.js';
 import { ensureWeekPlan, loadWeek } from '../plan/weeks.js';
 import { crud } from './crud.js';
 
@@ -36,6 +40,12 @@ export const planRoutes: FastifyPluginAsyncTypebox = async (app) => {
         if (!isIsoDate(start)) throw badRequest('start_date', 'is not a calendar date');
         if (!isIsoDate(end)) throw badRequest('end_date', 'is not a calendar date');
         if (end < start) throw badRequest('end_date', 'is before start_date');
+        if (body.progression_rules != null) {
+          const checked = validateRules(body.progression_rules);
+          if (!checked.ok) {
+            throw badRequest(`progression_rules/${checked.key}`, checked.message);
+          }
+        }
       },
     }),
   );
@@ -62,6 +72,39 @@ export const planRoutes: FastifyPluginAsyncTypebox = async (app) => {
     (req) => {
       if (!isIsoWeek(req.params.isoWeek)) throw badRequest('isoWeek', 'is not an ISO week');
       return loadWeek(app.db, req.params.isoWeek);
+    },
+  );
+
+  const WeekParams = Type.Object({ isoWeek: IsoWeek });
+  const checkWeek = (isoWeek: string) => {
+    if (!isIsoWeek(isoWeek)) throw badRequest('isoWeek', 'is not an ISO week');
+    return isoWeek;
+  };
+
+  app.post(
+    '/weeks/:isoWeek/generate',
+    {
+      schema: {
+        tags: ['week'],
+        params: WeekParams,
+        querystring: Type.Object({ force: Type.Optional(Type.Boolean()) }),
+        response: { 200: GeneratedWeek },
+      },
+    },
+    (req) => {
+      const isoWeek = checkWeek(req.params.isoWeek);
+      const result = generateWeekPlan(app.db, isoWeek, { force: req.query.force === true });
+      req.log.info({ week: isoWeek, ...result.changes }, 'week generated');
+      return result;
+    },
+  );
+
+  app.get(
+    '/weeks/:isoWeek/compliance',
+    { schema: { tags: ['week'], params: WeekParams, response: { 200: Compliance } } },
+    (req) => {
+      const isoWeek = checkWeek(req.params.isoWeek);
+      return { iso_week: isoWeek, ...weekCompliance(app.db, isoWeek) };
     },
   );
 

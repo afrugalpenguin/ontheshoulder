@@ -80,6 +80,9 @@ export const AthleteInput = Type.Object({
   units: Opt(Type.Literal('metric')),
   week_start: Opt(Type.Literal('monday')),
   timezone: Opt(Type.String({ minLength: 1, maxLength: 100 })),
+  /** When next week's plan is generated: ISO weekday and local time. */
+  plan_weekday: Opt(Type.Integer({ minimum: 1, maximum: 7 })),
+  plan_time: Opt(TimeOfDay),
 });
 export const Athlete = row(AthleteInput);
 
@@ -210,6 +213,38 @@ export const Week = Type.Object({
   generated_at: Nullable(Type.String()),
   reasoning: Type.Array(Type.String()),
   sessions: Type.Array(WeekSession),
+});
+
+export const GeneratedWeek = Type.Object({
+  week: Week,
+  changes: Type.Object({
+    created: Type.Integer(),
+    updated: Type.Integer(),
+    kept: Type.Integer(),
+    removed: Type.Integer(),
+  }),
+});
+
+export const Compliance = Type.Object({
+  iso_week: IsoWeek,
+  complete: Type.Boolean(),
+  required: Type.Array(
+    Type.Object({
+      template_key: Type.String(),
+      planned: Type.Integer(),
+      done: Type.Integer(),
+      met: Type.Boolean(),
+    }),
+  ),
+  treadmill: Type.Object({
+    days_done: Type.Integer(),
+    days_needed: Type.Integer(),
+    met: Type.Boolean(),
+  }),
+  optional_planned: Type.Integer(),
+  optional_done: Type.Integer(),
+  sessions_planned: Type.Integer(),
+  sessions_done: Type.Integer(),
 });
 
 // 5.3 Log
@@ -418,6 +453,8 @@ export type PlannedSession = Static<typeof PlannedSession>;
 export type PlannedSessionInput = Static<typeof PlannedSessionInput>;
 export type WeekSession = Static<typeof WeekSession>;
 export type Week = Static<typeof Week>;
+export type GeneratedWeek = Static<typeof GeneratedWeek>;
+export type Compliance = Static<typeof Compliance>;
 export type SetLog = Static<typeof SetLog>;
 export type SetLogInput = Static<typeof SetLogInput>;
 export type StrengthSession = Static<typeof StrengthSession>;

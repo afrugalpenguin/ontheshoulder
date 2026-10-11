@@ -8,6 +8,7 @@ try {
   const app = await buildApp({
     dataDir: resolveDataDir(),
     logger: { level: config.logLevel },
+    scheduler: true,
   });
   await app.listen({ host: config.host, port: config.port });
 } catch (err) {
