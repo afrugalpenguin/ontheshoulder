@@ -397,6 +397,36 @@ export const ProgrammeDay = Type.Object({
   slots: Type.Array(ProgrammeSlot),
 });
 
+// Trends (SPEC 8.6)
+
+export const TrendWeek = Type.Object({
+  iso_week: IsoWeek,
+  start_date: IsoDate,
+  run_minutes: Type.Number(),
+  vest_walk_hours: Type.Number(),
+  strength_sessions: Type.Integer(),
+  complete: Type.Boolean(),
+  optional_planned: Type.Integer(),
+  optional_done: Type.Integer(),
+  /** Mean of the ankle scores entered that week; null when none were. */
+  ankle_mean: Nullable(Type.Number()),
+  run_rpe_mean: Nullable(Type.Number()),
+  /** Heaviest working weight that week for each main lift (slots on the linear rule), by exercise name. */
+  lifts: Type.Record(Type.String(), Type.Number()),
+});
+
+export const TrendDay = Type.Object({
+  date: IsoDate,
+  sleep_quality: Nullable(Type.Integer()),
+  energy: Nullable(Type.Integer()),
+  weight_kg: Nullable(Type.Number()),
+  ankle_score: Nullable(Type.Integer()),
+  /** Mean RPE of the runs logged that day; null when there were none. */
+  run_rpe: Nullable(Type.Number()),
+  /** Metrics from other sources (Garmin, if set up), by metric name. */
+  metrics: Type.Record(Type.String(), Type.Number()),
+});
+
 // Setup, health and misc
 
 export const SetupStatus = Type.Object({
@@ -479,6 +509,8 @@ export type StrengthSession = Static<typeof StrengthSession>;
 export type StrengthSessionInput = Static<typeof StrengthSessionInput>;
 export type Activity = Static<typeof Activity>;
 export type ActivityInput = Static<typeof ActivityInput>;
+export type TrendWeek = Static<typeof TrendWeek>;
+export type TrendDay = Static<typeof TrendDay>;
 export type Checkin = Static<typeof Checkin>;
 export type CheckinInput = Static<typeof CheckinInput>;
 export type Metric = Static<typeof Metric>;

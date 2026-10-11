@@ -7,6 +7,7 @@ import { logRoutes } from './log.js';
 import { planRoutes } from './plan.js';
 import { setupRoutes } from './setup.js';
 import { strengthRoutes } from './strength.js';
+import { trendRoutes } from './trends.js';
 
 export const routes: FastifyPluginAsyncTypebox = async (app) => {
   app.get('/health', { schema: { tags: ['health'], response: { 200: HealthSchema } } }, () => {
@@ -35,4 +36,5 @@ export const routes: FastifyPluginAsyncTypebox = async (app) => {
   await app.register(logRoutes);
   await app.register(garminRoutes);
   await app.register(exportRoutes);
+  await app.register(trendRoutes);
 };
