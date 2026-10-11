@@ -1,0 +1,26 @@
+# systemd user unit for On the Shoulder on Linux.
+#
+# Install (as your own user, not root):
+#   mkdir -p ~/.config/systemd/user
+#   cp scripts/ontheshoulder.service ~/.config/systemd/user/
+#   edit WorkingDirectory below to where you cloned the repo
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now ontheshoulder
+#   loginctl enable-linger "$USER"     # start at boot, not only at login
+#
+# Logs: journalctl --user -u ontheshoulder -f
+
+[Unit]
+Description=On the Shoulder api and web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/ontheshoulder/apps/api
+ExecStart=/usr/bin/env node --env-file-if-exists=../../.env dist/server.js
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target
