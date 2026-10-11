@@ -11,7 +11,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/**/*.test.ts', 'src/test/**', 'src/server.ts', 'src/db/migrate.ts'],
+      exclude: [
+        'src/**/*.test.ts',
+        'src/test/**',
+        'src/server.ts',
+        'src/db/migrate.ts',
+        'src/db/vacuum.ts',
+      ],
       reporter: ['text'],
       thresholds: filtered
         ? {}

@@ -216,6 +216,8 @@ export const Week = Type.Object({
 });
 
 export const GeneratedWeek = Type.Object({
+  /** False for a dry run: nothing was written. */
+  persisted: Type.Boolean(),
   week: Week,
   changes: Type.Object({
     created: Type.Integer(),
@@ -461,6 +463,8 @@ export const HealthSchema = Type.Object({
   version: Type.String(),
   uptime_s: Type.Integer(),
   db: Type.Object({ ok: Type.Boolean(), migration: Nullable(Type.String()) }),
+  backup: Type.Object({ last: Nullable(Type.String()), count: Type.Integer() }),
+  garmin: Type.Object({ last_sync: Nullable(Type.String()) }),
 });
 
 export const GarminStatus = Type.Object({
