@@ -22,7 +22,11 @@ function startTarget(session: WeekSession): { to: string } | { hint: string } | 
     case 'walk':
       return { to: `/timer/${session.id}` };
     case 'strength':
-      return { to: '/strength' };
+      return {
+        to: session.template.programme_day_id
+          ? `/strength/day/${session.template.programme_day_id}`
+          : '/strength',
+      };
     case 'run':
       return { hint: 'Recorded on your watch' };
     default:
