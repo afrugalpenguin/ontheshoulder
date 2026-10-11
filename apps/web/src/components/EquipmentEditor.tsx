@@ -1,5 +1,6 @@
 import { achievableLoads, describeLoad, type Equipment, type EquipmentType } from '@ots/shared';
 import { useState } from 'react';
+import { Chip } from '../ui/index.js';
 import { NumberField } from './NumberField.js';
 
 export const NO_EQUIPMENT: Equipment = {
@@ -97,6 +98,33 @@ function WeightChips(props: {
   );
 }
 
+/** The plates owned at a glance: one chip per size, saying how many pairs. */
+export function PlatePairs({ equipment }: { equipment: Equipment }) {
+  const plates = [...equipment.plates].sort((a, b) => b.kg - a.kg);
+  if (plates.length === 0) return null;
+  const loads = achievableLoads(equipment, 'barbell');
+  return (
+    <section className="kit-section stack" aria-label="Plate pairs">
+      <h3>Plate pairs</h3>
+      <div className="chips">
+        {plates.map((p) => (
+          <Chip
+            key={p.kg}
+            aria-label={`${p.kg} kg, ${p.count} ${p.count === 1 ? 'pair' : 'pairs'}`}
+          >
+            {p.kg} x {p.count}
+          </Chip>
+        ))}
+      </div>
+      {loads.length > 0 && (
+        <p className="muted small">
+          Heaviest bar: {loads[loads.length - 1]} kg, with every plate on.
+        </p>
+      )}
+    </section>
+  );
+}
+
 /** Editor for the kit a user owns. Every section can be set to none. */
 export function EquipmentEditor({ value, onChange }: Props) {
   const set = (patch: Partial<Equipment>) => onChange({ ...value, ...patch });
@@ -128,6 +156,7 @@ export function EquipmentEditor({ value, onChange }: Props) {
 
   return (
     <div className="kit">
+      <PlatePairs equipment={value} />
       <fieldset className="kit-section">
         <legend>Barbell</legend>
         <label className="check">

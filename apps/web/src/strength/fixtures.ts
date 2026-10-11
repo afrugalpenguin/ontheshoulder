@@ -39,6 +39,7 @@ const slot = (id: number, position: number, over: Partial<ProgrammeSlot>): Progr
   increment_kg: 2.5,
   start_load_kg: null,
   notes: null,
+  warmups_enabled: true,
   ...over,
 });
 
@@ -108,6 +109,7 @@ export function past(
       rpe: null,
       done_at: null,
       notes: null,
+      warmup: false,
     })),
   );
   return { activity_id: nextId++, date, partial: false, sets };

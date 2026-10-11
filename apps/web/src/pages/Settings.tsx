@@ -8,6 +8,7 @@ import {
   type Fixture,
   type FixtureInput,
   type Habit,
+  type ProgrammeDay,
   type SessionTemplate,
   type Slot,
 } from '@ots/shared';
@@ -27,6 +28,7 @@ import {
   useFixtures,
   useHabits,
   useHealth,
+  useProgrammeDays,
   useSetupStatus,
   useTemplates,
 } from '../queries.js';
@@ -569,6 +571,46 @@ function BackupSection() {
   );
 }
 
+/**
+ * One switch for warm-up sets. It is stored on each barbell slot that
+ * progresses linearly, so it reads as on only when every one of them has it on.
+ */
+export function WarmupsSetting({ days }: { days: ProgrammeDay[] }) {
+  const client = useQueryClient();
+  const slots = days.flatMap((d) => d.slots).filter((s) => s.load_rule === 'linear');
+  const on = slots.length > 0 && slots.every((s) => s.warmups_enabled);
+  const save = useMutation({
+    mutationFn: (enabled: boolean) =>
+      Promise.all(
+        slots.map((s) => api('PATCH', `/programme-slots/${s.id}`, { warmups_enabled: enabled })),
+      ),
+    onSettled: () => client.invalidateQueries({ queryKey: keys.programmeDays }),
+  });
+  if (slots.length === 0) return null;
+  return (
+    <div className="stack">
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={save.isPending ? save.variables : on}
+          disabled={save.isPending}
+          onChange={(e) => save.mutate(e.target.checked)}
+        />
+        Warm-up sets before barbell lifts
+      </label>
+      <p className="muted small">
+        The empty bar twice, then 40 and 60 per cent of the working load. Logged, but never counted
+        for progression.
+      </p>
+      {save.isError && (
+        <p role="alert" className="error">
+          {errorText(save.error)}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function Settings() {
   const { today } = useNow();
   const status = useSetupStatus();
@@ -579,6 +621,7 @@ export function Settings() {
   const templates = useTemplates();
   const habits = useHabits();
   const blocks = useBlocks();
+  const days = useProgrammeDays();
 
   return (
     <main>
@@ -588,6 +631,7 @@ export function Settings() {
       <Section title="You">{athlete.data && <AthleteSection athlete={athlete.data} />}</Section>
       <Section title="Events">{events.data && <EventsSection events={events.data} />}</Section>
       <Section title="Kit">
+        {days.data && <WarmupsSetting days={days.data} />}
         {equipment.isSuccess && <EquipmentSection saved={equipment.data} />}
       </Section>
       <Section title="Week shape">
