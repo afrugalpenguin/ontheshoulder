@@ -105,6 +105,21 @@ function platesPerSide(equipment: Equipment, target: number): Map<number, number
 }
 
 /**
+ * The plates to put on each end of the bar for a load, heaviest first, for
+ * example 20 and 2.5 for 65kg on a 20kg bar. Empty for the bar alone. Returns
+ * null when there is no bar or the load cannot be made.
+ */
+export function platesEachSide(
+  load: number,
+  equipment: Equipment,
+): { kg: number; count: number }[] | null {
+  if (equipment.bar_kg === null) return null;
+  if (!achievableLoads(equipment, 'barbell').some((v) => toG(v) === toG(load))) return null;
+  const perSide = (toG(load) - toG(equipment.bar_kg)) / 2;
+  return [...platesPerSide(equipment, perSide)].map(([kg, count]) => ({ kg, count }));
+}
+
+/**
  * How to make a load from the kit, for example "bar + 2 x 20 + 2 x 1.25".
  * Returns null when the load cannot be made.
  */

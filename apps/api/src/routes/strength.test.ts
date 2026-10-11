@@ -1,4 +1,11 @@
-import type { ErrorBody, Exercise, ProgrammeDay, StrengthHistoryEntry } from '@ots/shared';
+import type {
+  ErrorBody,
+  Exercise,
+  ProgrammeDay,
+  ProgrammeSlot,
+  StrengthHistoryEntry,
+  TrendWeek,
+} from '@ots/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { makeApp, type TestApp } from '../test/helpers.js';
 
@@ -256,5 +263,108 @@ describe('strength history and slot changes', () => {
     });
     expect(res.status).toBe(400);
     expect(res.body.field).toBe('exercise_id');
+  });
+});
+
+describe('warm-up sets', () => {
+  // Its own database, so the sessions logged above do not get in the way.
+  let w: TestApp;
+  let day: ProgrammeDay;
+  let squat: ProgrammeSlot;
+  beforeAll(async () => {
+    w = await makeApp();
+    await w.call('POST', '/setup/apply-template/rebuild-100');
+    const days = (await w.call<ProgrammeDay[]>('GET', '/programme-days')).body;
+    day = days.find((d) => d.name === 'Strength A') as ProgrammeDay;
+    squat = day.slots[0] as ProgrammeSlot;
+  });
+  afterAll(() => w.close());
+
+  it('slots have warm-ups on by default, and the setting can be switched per slot', async () => {
+    expect(day.slots.every((s) => s.warmups_enabled === true)).toBe(true);
+
+    const off = await w.call<ProgrammeSlot>('PATCH', `/programme-slots/${squat.id}`, {
+      warmups_enabled: false,
+    });
+    expect(off.status).toBe(200);
+    expect(off.body.warmups_enabled).toBe(false);
+    const reread = (await w.call<ProgrammeDay>('GET', `/programme-days/${day.id}`)).body;
+    expect(reread.slots[0]?.warmups_enabled).toBe(false);
+    // The other slots are untouched.
+    expect(reread.slots.slice(1).every((s) => s.warmups_enabled)).toBe(true);
+
+    const bad = await w.call<ErrorBody>('PATCH', `/programme-slots/${squat.id}`, {
+      warmups_enabled: 'yes',
+    });
+    expect(bad.status).toBe(400);
+    expect(bad.body.field).toBe('warmups_enabled');
+    await w.call('PATCH', `/programme-slots/${squat.id}`, { warmups_enabled: true });
+  });
+
+  it('a new day keeps warm-ups on unless told otherwise, and a replace can turn them off', async () => {
+    const made = await w.call<ProgrammeDay>('POST', '/programme-days', {
+      name: 'Strength C',
+      slots: [slot(squat.exercise_id), slot(squat.exercise_id, { warmups_enabled: false })],
+    });
+    expect(made.body.slots.map((s) => s.warmups_enabled)).toEqual([true, false]);
+  });
+
+  it('stores the warm-up flag on each set and returns warm-ups before working sets', async () => {
+    const working = [1, 2, 3, 4, 5].map((set_no) => ({
+      slot_id: squat.id,
+      set_no,
+      reps: 5,
+      load_kg: 60,
+    }));
+    const warmups = [20, 20, 25, 37.5].map((load_kg, i) => ({
+      slot_id: squat.id,
+      set_no: i + 1,
+      reps: 5,
+      load_kg,
+      warmup: true,
+    }));
+    const res = await w.call<{ id: number }>('POST', '/activities', {
+      date: '2031-01-08',
+      kind: 'strength',
+      strength_session: { programme_day_id: day.id, sets: [...working, ...warmups] },
+    });
+    expect(res.status).toBe(201);
+
+    const history = await w.call<StrengthHistoryEntry[]>(
+      'GET',
+      `/programme-days/${day.id}/history`,
+    );
+    const sets = history.body[0]?.sets ?? [];
+    expect(sets.map((s) => [s.warmup, s.set_no, s.load_kg])).toEqual([
+      [true, 1, 20],
+      [true, 2, 20],
+      [true, 3, 25],
+      [true, 4, 37.5],
+      [false, 1, 60],
+      [false, 2, 60],
+      [false, 3, 60],
+      [false, 4, 60],
+      [false, 5, 60],
+    ]);
+  });
+
+  it('leaves warm-ups out of the working weight in trends', async () => {
+    // A warm-up logged heavier than the working sets must not become the week's lift.
+    await w.call('POST', '/activities', {
+      date: '2031-01-15',
+      kind: 'strength',
+      strength_session: {
+        programme_day_id: day.id,
+        sets: [
+          { slot_id: squat.id, set_no: 1, reps: 5, load_kg: 90, warmup: true },
+          { slot_id: squat.id, set_no: 1, reps: 5, load_kg: 62.5 },
+        ],
+      },
+    });
+    const weeks = await w.call<TrendWeek[]>('GET', '/trends/weekly?from=2031-01-06&to=2031-01-19');
+    expect(weeks.body.map((week) => week.lifts)).toEqual([
+      { 'Back squat': 60 },
+      { 'Back squat': 62.5 },
+    ]);
   });
 });

@@ -13,7 +13,7 @@ import {
   weekdayOf,
 } from '@ots/shared';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { and, asc, eq, gte, lte, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lte, type SQL } from 'drizzle-orm';
 import { Type } from 'typebox';
 import type { Db } from '../db/client.js';
 import {
@@ -45,7 +45,7 @@ export function loadActivity(db: Db, id: number): Activity | undefined {
     .select()
     .from(set_log)
     .where(eq(set_log.strength_session_id, session.id))
-    .orderBy(asc(set_log.slot_id), asc(set_log.set_no))
+    .orderBy(asc(set_log.slot_id), desc(set_log.warmup), asc(set_log.set_no))
     .all();
   return { ...row, strength_session: { ...session, sets } };
 }

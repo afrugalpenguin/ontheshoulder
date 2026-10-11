@@ -102,6 +102,8 @@ export const programme_slot = sqliteTable('programme_slot', {
   increment_kg: real('increment_kg'),
   start_load_kg: real('start_load_kg'),
   notes: text('notes'),
+  /** Offer the warm-up ramp before the working sets (barbell slots on the linear rule). */
+  warmups_enabled: bool('warmups_enabled').notNull().default(true),
 });
 
 // 5.2 Plan
@@ -239,6 +241,8 @@ export const set_log = sqliteTable('set_log', {
   rpe: real('rpe'),
   done_at: text('done_at'),
   notes: text('notes'),
+  /** A warm-up set: logged, but never counted for progression or as working weight. */
+  warmup: bool('warmup').notNull().default(false),
 });
 
 export const daily_checkin = sqliteTable('daily_checkin', {
