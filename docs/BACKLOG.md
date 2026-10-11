@@ -27,3 +27,6 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Strength session state is in memory: leaving the screen before Finish loses the sets logged so far
 - Timed and carried sets are logged with reps of 1; a seconds or distance field per set would be truer
 - Applying the starter template to a database set up before stage 7 adds the new alternative exercises (re-run apply-template); nothing does that automatically
+- Trends: the last bar of the volume chart sits against the right edge; give the x scale some padding
+- Trends: B and C event markers on the charts (SPEC 5.1 mentions them on Trends) are not drawn yet; they are on Week
+- Trends: the charts have text legends with latest values but no way to read off an earlier point

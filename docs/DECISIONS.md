@@ -59,3 +59,9 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Stage 7. The session is held in memory until Finish; a partial session is whatever has been logged when Finish is pressed.
 - 2026-10-11: Stage 7. Strength sessions are dated today and linked to today's planned session for that day if there is one, else the first open one this week.
 - 2026-10-11: Stage 7. The starter template's library gained twelve same-pattern alternatives (dumbbell, kettlebell and bodyweight) so substitution has something to offer. A carry has no bodyweight alternative, so that slot can say none available.
+- 2026-10-11: Stage 9. Charts use uPlot: small, canvas based, and loaded only with the Trends tab. Recharts was the alternative and is several times the size.
+- 2026-10-11: Stage 9. Trends are computed in a thin pure TypeScript layer over plain row queries, not in SQL, so the arithmetic is unit tested on fixed data.
+- 2026-10-11: Stage 9. Run and vest-walk bars are stacked in minutes to share an axis; text reports vest walks in hours. Means ignore days with no entry instead of counting them as zero.
+- 2026-10-11: Stage 9. "Main lifts" are slots on the linear rule; the chart shows the two with the most history. A substitute set counts under the exercise actually done.
+- 2026-10-11: Stage 9. The review card compares the current ISO week with the one before using fixed sentences and no judgement words.
+- 2026-10-11: Stage 9. Request bodies are no longer type-coerced (only query strings and path parameters are), because coercion turned a real 0 into null in nullable fields.
