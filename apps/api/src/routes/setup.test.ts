@@ -131,11 +131,11 @@ describe('starter template', () => {
       exercises: 24,
       programme_days: 2,
       programme_slots: 12,
-      session_templates: 8,
+      session_templates: 10,
       fixtures: 10,
       blocks: 1,
     });
-    expect(first.body.changes).toBe(62);
+    expect(first.body.changes).toBe(64);
 
     const second = await fresh.call<ApplyTemplateResult>(
       'POST',

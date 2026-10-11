@@ -191,8 +191,8 @@ export const rebuild100: StarterTemplateData = {
       key: 'midweek_run',
       kind: 'run',
       name: 'Midweek run',
-      default_duration_min: 34,
-      structure: { warmup_min: 5, repeats: 8, run_sec: 120, walk_sec: 60, cooldown_min: 5 },
+      default_duration_min: 45,
+      structure: { min_min: 40, max_min: 50 },
       notes: 'Inside the treadmill slot, after prehab. Movable to any weekday.',
       tags: ['treadmill'],
     },
@@ -200,9 +200,26 @@ export const rebuild100: StarterTemplateData = {
       key: 'long_run',
       kind: 'run',
       name: 'Long run',
+      default_duration_min: 55,
+      structure: { min_min: 50, max_min: 60 },
+      notes: 'Early. Optional: done is a bonus, missed is normal.',
+    },
+    // Not on any day by default: structured run-walk sessions to pick for a fixture.
+    {
+      key: 'runwalk_short',
+      kind: 'run',
+      name: 'Run-walk, 8 x 2:00 / 1:00',
+      default_duration_min: 34,
+      structure: { warmup_min: 5, repeats: 8, run_sec: 120, walk_sec: 60, cooldown_min: 5 },
+      notes: 'Five minutes of walking either side.',
+    },
+    {
+      key: 'runwalk_long',
+      kind: 'run',
+      name: 'Run-walk, 10 x 2:00 / 1:00',
       default_duration_min: 40,
       structure: { warmup_min: 5, repeats: 10, run_sec: 120, walk_sec: 60, cooldown_min: 5 },
-      notes: 'Early. Optional: done is a bonus, missed is normal.',
+      notes: 'Five minutes of walking either side.',
     },
     { key: 'long_ride', kind: 'ride', name: 'Turbo long ride', notes: 'Conversational.' },
     { key: 'swim', kind: 'swim', name: 'Coached swim' },
@@ -242,6 +259,9 @@ export const rebuild100: StarterTemplateData = {
     weeks: 10,
     // SPEC 6.3. Interpreted by the plan engine; editable per block once applied.
     progression_rules: {
+      // Runs are a time box: the same range every week. Change mode to "runwalk"
+      // and the ladder below takes over for the midweek and long run.
+      runs: { mode: 'timebox' },
       midweek_run: {
         template_key: 'midweek_run',
         warmup_min: 5,

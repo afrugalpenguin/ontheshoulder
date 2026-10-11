@@ -47,6 +47,17 @@ export const LongRunRule = Type.Object(
   strict,
 );
 
+/** The two ways a run can be planned. */
+export const RUN_MODES = ['timebox', 'runwalk'] as const;
+
+/**
+ * How runs are planned. `timebox` passes each run template's time box through
+ * unchanged, week after week. `runwalk` applies the run-walk ladder in
+ * `midweek_run` and `long_run`. Without this section the ladder applies, as it
+ * did before the mode existed.
+ */
+export const RunsRule = Type.Object({ mode: Type.Enum(RUN_MODES) }, strict);
+
 export const VestRule = Type.Object(
   {
     /** Used when no kit has been saved. Saved kit always wins. */
@@ -76,6 +87,7 @@ export const ComplianceRule = Type.Object(
 
 export const ProgressionRules = Type.Object(
   {
+    runs: Type.Optional(RunsRule),
     midweek_run: Type.Optional(MidweekRunRule),
     long_run: Type.Optional(LongRunRule),
     vest: Type.Optional(VestRule),
@@ -84,6 +96,7 @@ export const ProgressionRules = Type.Object(
   strict,
 );
 
+export type RunsRule = Static<typeof RunsRule>;
 export type MidweekRunRule = Static<typeof MidweekRunRule>;
 export type LongRunRule = Static<typeof LongRunRule>;
 export type VestRule = Static<typeof VestRule>;

@@ -83,3 +83,28 @@ describe('validateRules', () => {
     expect(validateRules(null)).toMatchObject({ ok: false });
   });
 });
+
+describe('run mode', () => {
+  it.each(['timebox', 'runwalk'])('accepts %s', (mode) => {
+    const rules = { ...VALID, runs: { mode } };
+    expect(validateRules(rules)).toEqual({ ok: true, rules });
+  });
+
+  it('accepts the mode on its own, with no ladder to fall back on', () => {
+    expect(validateRules({ runs: { mode: 'timebox' } }).ok).toBe(true);
+  });
+
+  it('rejects an unknown mode, naming the key', () => {
+    const result = validateRules({ ...VALID, runs: { mode: 'fartlek' } });
+    expect(result).toMatchObject({ ok: false, key: 'runs/mode' });
+  });
+
+  it('rejects a missing mode and an unknown key beside it', () => {
+    expect(validateRules({ runs: {} })).toMatchObject({ ok: false, key: 'runs/mode' });
+    expect(validateRules({ runs: { mode: 'timebox', pace: 'easy' } })).toMatchObject({
+      ok: false,
+      key: 'runs/pace',
+      message: 'is not a known rule key',
+    });
+  });
+});

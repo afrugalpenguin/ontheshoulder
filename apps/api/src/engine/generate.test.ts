@@ -10,7 +10,10 @@ import {
   type GenerateInput,
 } from './generate.js';
 
-const RULES = rebuild100.block.progression_rules as Required<ProgressionRules>;
+const SEEDED = rebuild100.block.progression_rules as Required<ProgressionRules>;
+// Most of this file tests the run-walk ladder, so its rules select that mode.
+// The time box, the starter's default, has its own section at the end.
+const RULES: Required<ProgressionRules> = { ...SEEDED, runs: { mode: 'runwalk' } };
 
 /** The starter template's fixtures as the engine sees them, with ids in list order. */
 const FIXTURES: EngineFixture[] = rebuild100.fixtures.map((f) => {
@@ -199,12 +202,7 @@ describe('generateWeek: fixtures, optional flag and vest', () => {
   it('uses the template structure for sessions no rule covers', () => {
     const noRules = generateWeek(input({ rules: {} }));
     const midweek = noRules.create.find((s) => s.template_id === MIDWEEK);
-    expect(midweek?.targets).toEqual({
-      repeats: 8,
-      run_block_sec: 120,
-      walk_block_sec: 60,
-      duration_min: 34,
-    });
+    expect(midweek?.targets).toEqual({ min_min: 40, max_min: 50 });
     const walk = noRules.create.find((s) => s.template_id === idOf('treadmill_walk'));
     expect(walk?.targets).toEqual({ duration_min: 50 });
     const ride = noRules.create.find((s) => s.template_id === idOf('long_ride'));
@@ -309,5 +307,101 @@ describe('regeneration preserves edits and linked sessions', () => {
     );
     expect(again.remove).toEqual([2]);
     expect(again.keep).toEqual([7]);
+  });
+});
+
+describe('runs as a time box', () => {
+  const runs = (r: ReturnType<typeof generateWeek>) =>
+    [MIDWEEK, LONG].map((id) => r.create.find((s) => s.template_id === id)?.targets);
+  const previousOf = (r: ReturnType<typeof generateWeek>) =>
+    r.create.map((s) => ({ template_id: s.template_id, targets: s.targets }));
+
+  it('is what the starter template asks for', () => {
+    expect(SEEDED.runs).toEqual({ mode: 'timebox' });
+  });
+
+  it('a timebox run generates identical targets week on week', () => {
+    const week1 = generateWeek(input({ rules: SEEDED }));
+    expect(runs(week1)).toEqual([
+      { min_min: 40, max_min: 50 },
+      { min_min: 50, max_min: 60 },
+    ]);
+    let previous = previousOf(week1);
+    for (const isoWeek of ['2031-W03', '2031-W04', '2031-W05', '2031-W06', '2031-W07']) {
+      const week = generateWeek(input({ rules: SEEDED, isoWeek, previous }));
+      expect(runs(week), isoWeek).toEqual(runs(week1));
+      previous = previousOf(week);
+    }
+  });
+
+  it('says so in the reasoning, with no ladder lines', () => {
+    expect(generateWeek(input({ rules: SEEDED })).reasoning).toEqual([
+      'Midweek run: 40 to 50 min at your own pace, the same every week.',
+      'Long run: 50 to 60 min at your own pace, the same every week.',
+      'Vest walks: 20kg.',
+    ]);
+  });
+
+  it('switching the mode to runwalk restores the ladder from its starting point', () => {
+    const boxed = generateWeek(input({ rules: SEEDED }));
+    const week2 = generateWeek(
+      input({ rules: RULES, isoWeek: '2031-W03', previous: previousOf(boxed) }),
+    );
+    expect(runs(week2)).toEqual([
+      { repeats: 8, run_block_sec: 120, walk_block_sec: 60, duration_min: 34 },
+      { repeats: 10, run_block_sec: 120, walk_block_sec: 60, duration_min: 40 },
+    ]);
+    const week3 = generateWeek(
+      input({ rules: RULES, isoWeek: '2031-W04', previous: previousOf(week2) }),
+    );
+    expect(runs(week3).map((t) => [t?.repeats, t?.run_block_sec])).toEqual([
+      [8, 150],
+      [13, 120],
+    ]);
+  });
+
+  it('rules without a runs section keep the ladder, as blocks saved before the mode existed do', () => {
+    const legacy: ProgressionRules = { ...RULES };
+    delete legacy.runs;
+    expect(runs(generateWeek(input({ rules: legacy })))).toEqual(
+      runs(generateWeek(input({ rules: RULES }))),
+    );
+  });
+
+  it('switching back to timebox drops the ladder targets again', () => {
+    const laddered = generateWeek(input({ rules: RULES }));
+    const back = generateWeek(
+      input({ rules: SEEDED, isoWeek: '2031-W03', previous: previousOf(laddered) }),
+    );
+    expect(runs(back)).toEqual([
+      { min_min: 40, max_min: 50 },
+      { min_min: 50, max_min: 60 },
+    ]);
+  });
+
+  it('a structured run-walk template on a fixture keeps its structure in timebox mode', () => {
+    const template = rebuild100.session_templates.find((t) => t.key === 'runwalk_short');
+    if (!template) throw new Error('no runwalk_short template');
+    const fixtures: EngineFixture[] = [
+      {
+        weekday: 2,
+        slot: 'am',
+        template: {
+          id: 99,
+          key: template.key,
+          kind: template.kind,
+          name: template.name,
+          default_duration_min: template.default_duration_min ?? null,
+          structure: template.structure ?? null,
+        },
+      },
+    ];
+    const week = generateWeek(input({ rules: SEEDED, fixtures }));
+    expect(week.create[0]?.targets).toEqual({
+      repeats: 8,
+      run_block_sec: 120,
+      walk_block_sec: 60,
+      duration_min: 34,
+    });
   });
 });
