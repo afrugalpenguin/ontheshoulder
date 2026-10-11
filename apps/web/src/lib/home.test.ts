@@ -16,6 +16,11 @@ describe('kitPrompt', () => {
     expect(kitPrompt(HABITS, [run], time)).toBe(expected);
   });
 
+  it('gives a time-boxed run as its range', () => {
+    const boxed = session('run', 'Long run', { min_min: 50, max_min: 60 });
+    expect(kitPrompt(HABITS, [boxed], '20:00')).toBe('Tomorrow: run, 50 to 60 min. Kit out?');
+  });
+
   it('says nothing when nothing is planned, or only rest or skipped sessions', () => {
     expect(kitPrompt(HABITS, [], '21:00')).toBeNull();
     expect(kitPrompt(HABITS, [session('rest', 'Rest', {})], '21:00')).toBeNull();

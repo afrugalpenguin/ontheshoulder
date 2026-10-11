@@ -46,6 +46,20 @@ export async function makeApp(): Promise<TestApp> {
   };
 }
 
+/**
+ * Switches the first block between time-boxed runs (the starter default) and
+ * the run-walk ladder, the way the rules editor would.
+ */
+export async function setRunMode(t: TestApp, mode: 'timebox' | 'runwalk'): Promise<void> {
+  const blocks = (await t.call<{ id: number; progression_rules: object }[]>('GET', '/blocks')).body;
+  const block = blocks[0];
+  if (!block) throw new Error('no block to set the run mode on');
+  const res = await t.call('PATCH', `/blocks/${block.id}`, {
+    progression_rules: { ...block.progression_rules, runs: { mode } },
+  });
+  if (res.status !== 200) throw new Error(`setting the run mode failed with ${res.status}`);
+}
+
 // Obviously synthetic values for tests. Nothing here describes a real person or event.
 export const ATHLETE = { display_name: 'Test Runner' };
 export const A_EVENT = {

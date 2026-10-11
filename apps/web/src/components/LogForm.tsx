@@ -1,7 +1,7 @@
 import type { ActivityInput, WeekSession } from '@ots/shared';
 import { useState } from 'react';
-import { buildActivity, logDefaults, type LogFormState } from '../lib/activity.js';
-import { Button, Stepper } from '../ui/index.js';
+import { FEELS, buildActivity, logDefaults, type LogFormState } from '../lib/activity.js';
+import { Button, Chip, Stepper } from '../ui/index.js';
 
 interface Props {
   session: WeekSession;
@@ -10,11 +10,16 @@ interface Props {
   error?: string | null;
 }
 
-/** The log sheet's form, pre-filled from the plan: minutes, effort, a note. Saving is one tap. */
+/**
+ * The log sheet's form, pre-filled from the plan, so saving is one tap. A run
+ * is minutes, effort and an optional "how was it"; the watch has the rest.
+ * Everything else is minutes, effort and a note.
+ */
 export function LogForm({ session, onSubmit, busy, error }: Props) {
   const [form, setForm] = useState<LogFormState>(() => logDefaults(session));
   const set = <K extends keyof LogFormState>(key: K, value: LogFormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+  const isRun = session.template.kind === 'run';
 
   return (
     <form
@@ -45,10 +50,24 @@ export function LogForm({ session, onSubmit, busy, error }: Props) {
         start={5}
         clearable
       />
-      <label>
-        Notes
-        <textarea rows={2} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
-      </label>
+      {isRun ? (
+        <div className="chips" role="group" aria-label="How was it">
+          {FEELS.map((feel) => (
+            <Chip
+              key={feel}
+              selected={form.feel === feel}
+              onClick={() => set('feel', form.feel === feel ? null : feel)}
+            >
+              {feel}
+            </Chip>
+          ))}
+        </div>
+      ) : (
+        <label>
+          Notes
+          <textarea rows={2} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+        </label>
+      )}
       {error && (
         <p role="alert" className="error">
           {error}

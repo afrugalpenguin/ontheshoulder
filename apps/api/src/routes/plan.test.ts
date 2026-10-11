@@ -148,7 +148,7 @@ describe('weeks and planned sessions', () => {
       ['2031-01-13', 'vest_walk'],
       ['2031-01-14', 'midweek_run'],
     ]);
-    expect(week.body.sessions[1]?.template.structure).toMatchObject({ repeats: 8 });
+    expect(week.body.sessions[1]?.template.structure).toEqual({ min_min: 40, max_min: 50 });
   });
 
   it('refuses the same template in the same slot on the same day', async () => {

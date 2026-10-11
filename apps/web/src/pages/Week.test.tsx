@@ -167,6 +167,35 @@ describe('Week', () => {
     expect(screen.getByRole('heading', { name: /2031-W03/ })).toBeTruthy();
   });
 
+  it('adds the run minutes logged this week to the header line', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(6, 8));
+    stubApi({
+      '/weeks/2031-W02': WEEK,
+      '/habits': HABITS,
+      '/trends/weekly?from=2031-01-06&to=2031-01-12': [{ iso_week: '2031-W02', run_minutes: 95 }],
+    });
+    renderApp(<Week />);
+    const line = await screen.findByLabelText('Week compliance');
+    expect(line.textContent).toBe('So far: 0 of 0 sessions, run 95 min');
+  });
+
+  it('shows a time-boxed run as a range on its card', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(7, 8));
+    const boxed = {
+      ...WEEK,
+      sessions: [
+        session('run', 'Midweek run', { min_min: 40, max_min: 50 }, { id: 2, date: '2031-01-07' }),
+      ],
+    };
+    stubApi({ '/weeks/2031-W02': boxed, '/habits': HABITS });
+    renderApp(<Week />);
+    const card = await screen.findByRole('article', { name: 'Midweek run' });
+    expect(card.textContent).toContain('40 to 50 min, your pace');
+    expect(within(card).getByRole('button', { name: 'Log' })).toBeTruthy();
+  });
+
   it('shows the two streaks in the header', async () => {
     open(at(6, 8));
     const streaks = await screen.findByLabelText('Streaks');

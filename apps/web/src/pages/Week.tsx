@@ -86,6 +86,7 @@ export function Week() {
   const week = useWeek(isoWeek);
   const tomorrowWeek = useWeek(isoWeekOf(tomorrow));
   const compliance = useCompliance(isoWeek);
+  const totals = useWeeklyTrends(monday, dates[6] as string);
   const events = useEvents();
   const habits = useHabits();
   const checkin = useCheckin(today);
@@ -142,15 +143,23 @@ export function Week() {
     week.data &&
     tomorrowWeek.data &&
     compliance.data &&
+    totals.data &&
     events.data &&
     habits.data &&
     checkin.data &&
     tomorrowCheckin.data &&
     !lastWeight.isLoading,
   );
-  const loadError = [week, tomorrowWeek, compliance, events, habits, checkin, tomorrowCheckin].find(
-    (q) => q.isError,
-  );
+  const loadError = [
+    week,
+    tomorrowWeek,
+    compliance,
+    totals,
+    events,
+    habits,
+    checkin,
+    tomorrowCheckin,
+  ].find((q) => q.isError);
 
   // Bring today to the top of the screen once the week has been drawn.
   const todayRow = useRef<HTMLElement>(null);
@@ -175,6 +184,7 @@ export function Week() {
 
   const { goal } = pickEvents(events.data ?? [], today);
   const summary = compliance.data ? complianceText(compliance.data) : null;
+  const runMinutes = totals.data?.find((w) => w.iso_week === isoWeek)?.run_minutes;
   const sessions = week.data?.sessions ?? [];
   const prompts = habits.data && checkin.data ? activePrompts(habits.data, checkin.data, time) : [];
   const failure = [regenerate, generateNext, saveCheckin, saveTomorrow].find(
@@ -220,6 +230,7 @@ export function Week() {
         {summary && (
           <p className="compliance" aria-label="Week compliance">
             {summary.main}
+            {runMinutes !== undefined && `, run ${Math.round(runMinutes)} min`}
             {summary.bonus && <span className="tag">{summary.bonus}</span>}
           </p>
         )}

@@ -152,6 +152,9 @@ export const SessionStructure = Type.Object({
   cooldown_min: Opt(Count),
   duration_min: Opt(Count),
   vest_kg: Opt(Kg),
+  /** A time box: go out for between min_min and max_min minutes, at any pace. */
+  min_min: Opt(Count),
+  max_min: Opt(Count),
 });
 
 export const SessionTemplateInput = Type.Object({
@@ -173,6 +176,9 @@ export const Targets = Type.Object({
   repeats: OptNull(Count),
   vest_kg: OptNull(Kg),
   distance_km: OptNull(Type.Number({ minimum: 0 })),
+  /** Set together for a time box, in place of a single duration. */
+  min_min: OptNull(Count),
+  max_min: OptNull(Count),
 });
 
 export const PlannedSessionInput = Type.Object({

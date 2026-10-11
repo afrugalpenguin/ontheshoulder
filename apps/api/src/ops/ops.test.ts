@@ -7,7 +7,7 @@ import Database from 'better-sqlite3';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../app.js';
 import { readConfig } from '../config.js';
-import { ATHLETE, makeApp, type TestApp } from '../test/helpers.js';
+import { ATHLETE, makeApp, setRunMode, type TestApp } from '../test/helpers.js';
 import { backupName, backupStatus, listBackups, nightlyDue, runBackup } from './backup.js';
 import { isLanAddress, lanGuard } from './lan-guard.js';
 import { loggerOptions } from './logging.js';
@@ -17,6 +17,8 @@ beforeAll(async () => {
   t = await makeApp();
   await t.call('PUT', '/athlete', ATHLETE);
   await t.call('POST', '/setup/apply-template/rebuild-100', { start_date: '2031-01-06' });
+  // The dry-run tests below edit the run-walk ladder, so the block uses it.
+  await setRunMode(t, 'runwalk');
 });
 afterAll(() => t.close());
 

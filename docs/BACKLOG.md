@@ -38,3 +38,5 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - Check-in is only on today's row; a missed day cannot be filled in afterwards from Week
 - `ScoreRow` and `NumberField` are still used by the strength slot card and the kit editor; stages 14 and 15 replace them with the primitives
 - The demo page screenshots in `docs/screenshots` are taken by hand; nothing regenerates them
+- `docs/SPEC.md` 6.3 still describes the run-walk ladder as the Block 1 default, and 5.2 and 5.3 list run fields the log sheet no longer asks for; bring the spec in line with v1.1
+- Run minutes on Week count every run activity in the week, linked to a planned session or not

@@ -9,7 +9,7 @@ import type {
 } from '@ots/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runScheduledGeneration } from '../plan/scheduler.js';
-import { ATHLETE, makeApp, type TestApp } from '../test/helpers.js';
+import { ATHLETE, makeApp, setRunMode, type TestApp } from '../test/helpers.js';
 
 // Route-level tests for generation, compliance, rules validation and the scheduler.
 
@@ -17,6 +17,8 @@ let t: TestApp;
 beforeAll(async () => {
   t = await makeApp();
   await t.call('POST', '/setup/apply-template/rebuild-100', { start_date: '2031-01-06' });
+  // These are the run-walk ladder's tests; the time box has its own below.
+  await setRunMode(t, 'runwalk');
 });
 afterAll(() => t.close());
 
@@ -251,5 +253,51 @@ describe('scheduled generation', () => {
     expect(after.sessions.find((s) => s.id === first.id)?.status).toBe('skipped');
     expect(runScheduledGeneration(db, log, sundayNight)).toBeNull();
     await fresh.close();
+  });
+});
+
+describe('runs as a time box, the starter default', () => {
+  let fresh: TestApp;
+  beforeAll(async () => {
+    fresh = await makeApp();
+    await fresh.call('POST', '/setup/apply-template/rebuild-100', { start_date: '2031-01-06' });
+  });
+  afterAll(() => fresh.close());
+
+  const runTargets = (week: Week) =>
+    ['midweek_run', 'long_run'].map((key) => find(week, key).targets);
+
+  it('generates the same run targets two weeks running', async () => {
+    const week1 = (await fresh.call<GeneratedWeek>('POST', '/weeks/2031-W02/generate')).body.week;
+    const week2 = (await fresh.call<GeneratedWeek>('POST', '/weeks/2031-W03/generate')).body.week;
+    expect(runTargets(week1)).toEqual([
+      { min_min: 40, max_min: 50 },
+      { min_min: 50, max_min: 60 },
+    ]);
+    expect(runTargets(week2)).toEqual(runTargets(week1));
+    expect(week2.reasoning).toContain(
+      'Midweek run: 40 to 50 min at your own pace, the same every week.',
+    );
+  });
+
+  it('refuses an unknown run mode on a block, naming the key', async () => {
+    const block = (await fresh.call<Block[]>('GET', '/blocks')).body[0] as Block;
+    const res = await fresh.call<ErrorBody>('PATCH', `/blocks/${block.id}`, {
+      progression_rules: { ...(block.progression_rules as object), runs: { mode: 'tempo' } },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.field).toBe('progression_rules/runs/mode');
+  });
+
+  it('brings the ladder back when the block is switched to runwalk', async () => {
+    await setRunMode(fresh, 'runwalk');
+    const res = await fresh.call<GeneratedWeek>('POST', '/weeks/2031-W03/generate');
+    expect(runTargets(res.body.week)).toEqual([
+      { repeats: 8, run_block_sec: 120, walk_block_sec: 60, duration_min: 34 },
+      { repeats: 10, run_block_sec: 120, walk_block_sec: 60, duration_min: 40 },
+    ]);
+    const next = await fresh.call<GeneratedWeek>('POST', '/weeks/2031-W04/generate');
+    expect(find(next.body.week, 'midweek_run').targets).toMatchObject({ run_block_sec: 150 });
+    expect(find(next.body.week, 'long_run').targets).toMatchObject({ repeats: 13 });
   });
 });

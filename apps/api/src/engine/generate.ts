@@ -145,9 +145,19 @@ export function longRunTarget(rule: LongRunRule, previous: Targets | undefined):
   return at(next, `held at the ${rule.repeats_cap} repeat cap`);
 }
 
+/** True when a template's structure is a time box: a range of minutes and nothing else to follow. */
+const isTimebox = (
+  s: SessionStructure | null,
+): s is SessionStructure & {
+  min_min: number;
+  max_min: number;
+} => s?.min_min !== undefined && s.max_min !== undefined;
+
 function structureTargets(template: EngineTemplate): Targets {
   const s = template.structure ?? {};
   const targets: Targets = {};
+  // A time box is passed through as it is: the same range every week.
+  if (isTimebox(s)) return { min_min: s.min_min, max_min: s.max_min };
   if (s.repeats !== undefined && s.run_sec !== undefined) {
     const walk = s.walk_sec ?? 0;
     targets.repeats = s.repeats;
@@ -178,6 +188,8 @@ export function generateWeek(input: GenerateInput): GenerateResult {
   const { rules } = input;
   const dates = isoWeekDates(input.isoWeek);
   const optionalDays = rules.compliance?.optional_weekdays ?? [];
+  // The run-walk ladder applies unless the block asks for time boxes.
+  const ladder = rules.runs?.mode !== 'timebox';
   const previousFor = (templateId: number) =>
     input.previous.find((p) => p.template_id === templateId)?.targets;
 
@@ -192,16 +204,21 @@ export function generateWeek(input: GenerateInput): GenerateResult {
   for (const fixture of fixtures) {
     const { template } = fixture;
     let targets: Targets;
-    if (rules.midweek_run && template.key === rules.midweek_run.template_key) {
+    if (ladder && rules.midweek_run && template.key === rules.midweek_run.template_key) {
       const result = midweekRunTarget(rules.midweek_run, previousFor(template.id));
       targets = result.targets;
       reasoning.push(result.reason);
-    } else if (rules.long_run && template.key === rules.long_run.template_key) {
+    } else if (ladder && rules.long_run && template.key === rules.long_run.template_key) {
       const result = longRunTarget(rules.long_run, previousFor(template.id));
       targets = result.targets;
       reasoning.push(result.reason);
     } else {
       targets = structureTargets(template);
+      if (template.kind === 'run' && isTimebox(template.structure)) {
+        reasoning.push(
+          `${template.name}: ${targets.min_min} to ${targets.max_min} min at your own pace, the same every week.`,
+        );
+      }
       if (template.kind === 'walk_vest') {
         targets.vest_kg = vestWeight(input, template, fixture.weekday);
         vestLoads.add(targets.vest_kg);
