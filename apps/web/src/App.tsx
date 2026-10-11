@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router';
 import { errorText } from './api.js';
 import { Placeholder } from './pages/Placeholder.js';
@@ -11,6 +12,9 @@ import { StrengthHome } from './strength/StrengthHome.js';
 import { StrengthSession } from './strength/StrengthSession.js';
 import { RestDemo } from './timer/RestDemo.js';
 import { TimerPage } from './timer/TimerPage.js';
+
+// The charting library is only needed on Trends, so it loads with that tab.
+const Trends = lazy(() => import('./trends/Trends.js').then((m) => ({ default: m.Trends })));
 
 const TABS = [
   { to: '/', label: 'Today' },
@@ -72,10 +76,9 @@ export function App() {
         <Route
           path="/trends"
           element={
-            <Placeholder
-              title="Trends"
-              note="Charts and the weekly review arrive in a later stage."
-            />
+            <Suspense fallback={<Placeholder title="Trends" note="Loading..." />}>
+              <Trends />
+            </Suspense>
           }
         />
         <Route path="/timer/rest-demo" element={<RestDemo />} />

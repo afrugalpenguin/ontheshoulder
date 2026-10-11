@@ -779,6 +779,101 @@ p.rest-timer {
   padding: 0.15rem 0;
 }
 
+/* Trends */
+
+.review {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.chart-host {
+  width: 100%;
+  min-height: 220px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: 0.9rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  display: inline-block;
+  width: 1.4rem;
+  height: 0;
+  border-top: 3px solid currentColor;
+}
+
+.swatch-dash {
+  border-top-style: dashed;
+}
+
+.swatch-bar {
+  height: 0.8rem;
+  width: 0.8rem;
+  border: 0;
+  background: currentColor;
+}
+
+.swatch-points {
+  height: 0.6rem;
+  width: 0.6rem;
+  border: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.grid-weeks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
+  gap: 0.4rem;
+}
+
+.week-cell {
+  position: relative;
+  min-height: 3.6rem;
+  padding: 0.35rem 0.45rem;
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.week-cell.is-complete {
+  border-style: solid;
+  border-color: var(--done);
+  background: color-mix(in srgb, var(--done) 22%, transparent);
+  color: var(--fg);
+}
+
+.week-cell-mark {
+  font-weight: 700;
+}
+
+.bonus-dot {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.legend-note {
+  font-size: 0.85rem;
+}
+
 /* Bottom tab bar */
 
 .tabbar {
