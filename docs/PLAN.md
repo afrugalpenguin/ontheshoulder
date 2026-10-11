@@ -25,7 +25,20 @@ Who it is for: a returning runner with a weekday treadmill slot, a long ride and
 | Sat | none | none (family) |
 | Sun | none | Long run, early, optional |
 
-## Run progression
+## Runs
+
+### Default: a time box
+
+A run day is a time box. Go out, run for the time however you like, and stop. No pace, no intervals, no targets inside the session.
+
+- Midweek: 40 to 50 minutes.
+- Sunday: 50 to 60 minutes, optional.
+
+The time boxes are the same every week of Block 1; nothing progresses. Walk when you need to. The watch records the run. Log it in the app afterwards: the form is pre-filled at the middle of the box, with effort and an optional one-word "how was it".
+
+### Optional: the run-walk ladder
+
+If you want structure, the run-walk ladder is still there. Set `"runs": { "mode": "runwalk" }` in the block's rules (Settings, Blocks and rules) and regenerate the week.
 
 Week 1, both runs: 5 min walk warm-up, repeats of 2 min run / 1 min walk, 5 min walk cool-down.
 
@@ -34,7 +47,7 @@ Week 1, both runs: 5 min walk warm-up, repeats of 2 min run / 1 min walk, 5 min 
 
 Endpoint at week 10 if followed: 40 min continuous midweek; Sunday at 28 repeats (84 min) in week 7 and capped at 30 repeats from week 8.
 
-The watch records the runs. Log them in the app afterwards; the form is pre-filled from the plan and you adjust what actually happened.
+The ladder starts from its week 1 the week you switch to it. Two fixed run-walk sessions (8 and 10 repeats of 2 min / 1 min) are also in the template library, to put on any day without the ladder.
 
 ## Prehab (8 minutes, Tuesday and Friday)
 
