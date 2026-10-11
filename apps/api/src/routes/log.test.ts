@@ -192,6 +192,20 @@ describe('daily check-in', () => {
     expect((await t.call<Metric[]>('GET', '/metrics?metric=weight_kg')).body).toEqual([]);
   });
 
+  it('keeps a score of 0 as 0, not as nothing entered', async () => {
+    const res = await t.call<Checkin>('PUT', '/checkins/2031-01-16', { ankle_score: 0 });
+    expect(res.body.ankle_score).toBe(0);
+    expect((await t.call<Checkin>('GET', '/checkins/2031-01-16')).body.ankle_score).toBe(0);
+    const cleared = await t.call<Checkin>('PUT', '/checkins/2031-01-16', { ankle_score: null });
+    expect(cleared.body.ankle_score).toBeNull();
+  });
+
+  it('does not coerce body values: a number sent as text is rejected', async () => {
+    const res = await t.call<ErrorBody>('PUT', '/checkins/2031-01-16', { sleep_quality: '4' });
+    expect(res.status).toBe(400);
+    expect(res.body.field).toBe('sleep_quality');
+  });
+
   it('records dismissed prompts', async () => {
     const res = await t.call<Checkin>('PUT', '/checkins/2031-01-14', {
       dismissed_prompts: ['protein_shake'],
