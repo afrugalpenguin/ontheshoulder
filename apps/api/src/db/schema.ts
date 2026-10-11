@@ -231,6 +231,8 @@ export const set_log = sqliteTable('set_log', {
   slot_id: integer('slot_id')
     .notNull()
     .references(() => programme_slot.id),
+  /** The exercise actually done, when it was a substitute for the slot's own. */
+  exercise_id: integer('exercise_id').references(() => exercise.id),
   set_no: integer('set_no').notNull(),
   reps: integer('reps').notNull(),
   load_kg: real('load_kg'),

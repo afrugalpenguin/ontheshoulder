@@ -4,13 +4,23 @@ import {
   Id,
   ProgrammeDay,
   ProgrammeDayInput,
+  ProgrammeSlot,
+  ProgrammeSlotPatch,
+  StrengthHistoryEntry,
   type ProgrammeSlotInput,
 } from '@ots/shared';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm';
 import { Type } from 'typebox';
 import type { Db } from '../db/client.js';
-import { exercise, programme_day, programme_slot } from '../db/schema.js';
+import {
+  activity,
+  exercise,
+  programme_day,
+  programme_slot,
+  set_log,
+  strength_session,
+} from '../db/schema.js';
 import { badRequest, notFound } from '../errors.js';
 import { crud } from './crud.js';
 
@@ -145,6 +155,88 @@ export const strengthRoutes: FastifyPluginAsyncTypebox = async (app) => {
         });
       });
       return loadProgrammeDay(db, dayId) as ProgrammeDay;
+    },
+  );
+
+  // Past sessions of a day, most recent first, for load suggestions and "last done".
+  app.get(
+    '/programme-days/:id/history',
+    {
+      schema: {
+        tags,
+        params: IdParams,
+        querystring: Type.Object({
+          limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 50 })),
+        }),
+        response: { 200: Type.Array(StrengthHistoryEntry) },
+      },
+    },
+    (req) => {
+      if (!loadProgrammeDay(db, req.params.id)) throw notFound('programme day');
+      const sessions = db
+        .select({ session: strength_session, date: activity.date })
+        .from(strength_session)
+        .innerJoin(activity, eq(strength_session.activity_id, activity.id))
+        .where(eq(strength_session.programme_day_id, req.params.id))
+        .orderBy(desc(activity.date), desc(strength_session.id))
+        .limit(req.query.limit ?? 10)
+        .all();
+      return sessions.map(({ session, date }) => ({
+        activity_id: session.activity_id,
+        date,
+        partial: session.partial,
+        sets: db
+          .select()
+          .from(set_log)
+          .where(eq(set_log.strength_session_id, session.id))
+          .orderBy(asc(set_log.slot_id), asc(set_log.set_no))
+          .all(),
+      }));
+    },
+  );
+
+  // Changes one slot in place: its starting load, or a permanent exercise swap.
+  app.patch(
+    '/programme-slots/:id',
+    {
+      schema: {
+        tags,
+        params: IdParams,
+        body: ProgrammeSlotPatch,
+        response: { 200: ProgrammeSlot },
+      },
+    },
+    (req) => {
+      const slot = db
+        .select()
+        .from(programme_slot)
+        .where(eq(programme_slot.id, req.params.id))
+        .get();
+      if (!slot) throw notFound('programme slot');
+      const changes = Object.fromEntries(
+        Object.entries(req.body).filter(([, v]) => v !== undefined),
+      );
+      if (req.body.exercise_id !== undefined) {
+        const found = db.select().from(exercise).where(eq(exercise.id, req.body.exercise_id)).get();
+        if (!found) throw badRequest('exercise_id', 'is not an exercise');
+      }
+      if (Object.keys(changes).length === 0) return slot;
+      return db.transaction((tx) => {
+        if (req.body.exercise_id !== undefined && req.body.exercise_id !== slot.exercise_id) {
+          // Past sets logged without an exercise were the old one. Say so before the
+          // slot changes, or its history would be read as the new exercise's.
+          tx.update(set_log)
+            .set({ exercise_id: slot.exercise_id })
+            .where(and(eq(set_log.slot_id, slot.id), isNull(set_log.exercise_id)))
+            .run();
+        }
+        return tx
+          .update(programme_slot)
+          .set(changes)
+          .where(eq(programme_slot.id, slot.id))
+          .returning()
+          .get();
+      });
     },
   );
 

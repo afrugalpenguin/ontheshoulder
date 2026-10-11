@@ -149,6 +149,31 @@ describe('describeLoad', () => {
     });
   });
 
+  it('snapshot: how to load a spread of loads across every kit type', () => {
+    const lines = [20, 25, 42.5, 60, 62.5, 77.5, 97.5].map(
+      (load) => `${load}: ${describeLoad(load, full)}`,
+    );
+    lines.push(`dumbbell 12.5: ${describeLoad(12.5, full, 'dumbbell')}`);
+    lines.push(`kettlebell 16: ${describeLoad(16, full, 'kettlebell')}`);
+    lines.push(`plate 5: ${describeLoad(5, full, 'plate')}`);
+    lines.push(`unmakeable 61: ${describeLoad(61, full)}`);
+    expect(lines).toMatchInlineSnapshot(`
+      [
+        "20: bar only",
+        "25: bar + 2 x 2.5",
+        "42.5: bar + 2 x 10 + 2 x 1.25",
+        "60: bar + 2 x 20",
+        "62.5: bar + 2 x 20 + 2 x 1.25",
+        "77.5: bar + 2 x 20 + 2 x 5 + 2 x 2.5 + 2 x 1.25",
+        "97.5: bar + 2 x 20 + 2 x 10 + 2 x 5 + 2 x 2.5 + 2 x 1.25",
+        "dumbbell 12.5: 12.5kg dumbbells",
+        "kettlebell 16: 16kg kettlebell",
+        "plate 5: 5kg plate",
+        "unmakeable 61: null",
+      ]
+    `);
+  });
+
   it('uses the fewest plates when several combinations work', () => {
     const equipment = kit({
       bar_kg: 20,

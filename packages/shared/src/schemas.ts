@@ -251,6 +251,8 @@ export const Compliance = Type.Object({
 
 export const SetLogInput = Type.Object({
   slot_id: Id,
+  /** Set when a substitute exercise was done in place of the slot's own. */
+  exercise_id: OptNull(Id),
   set_no: Type.Integer({ minimum: 1, maximum: 50 }),
   reps: Type.Integer({ minimum: 0, maximum: 10_000 }),
   load_kg: OptNull(Kg),
@@ -369,6 +371,22 @@ export const ProgrammeSlot = Type.Required(
     position: Type.Integer(),
   }),
 );
+/** The fields of a slot that can be changed on their own, without resending the day. */
+export const ProgrammeSlotPatch = Type.Object({
+  exercise_id: Opt(Id),
+  increment_kg: OptNull(Kg),
+  start_load_kg: OptNull(Kg),
+  notes: OptNull(Text),
+});
+
+/** One past session of a programme day, with its sets. Lists are most recent first. */
+export const StrengthHistoryEntry = Type.Object({
+  activity_id: Type.Integer(),
+  date: IsoDate,
+  partial: Type.Boolean(),
+  sets: Type.Array(SetLog),
+});
+
 export const ProgrammeDayInput = Type.Object({
   name: Name,
   slots: Type.Array(ProgrammeSlotInput, { maxItems: 30 }),
@@ -472,6 +490,8 @@ export type LoadRule = (typeof LOAD_RULES)[number];
 export type ProgrammeSlot = Static<typeof ProgrammeSlot>;
 export type ProgrammeSlotInput = Static<typeof ProgrammeSlotInput>;
 export type ProgrammeDay = Static<typeof ProgrammeDay>;
+export type ProgrammeSlotPatch = Static<typeof ProgrammeSlotPatch>;
+export type StrengthHistoryEntry = Static<typeof StrengthHistoryEntry>;
 export type ProgrammeDayInput = Static<typeof ProgrammeDayInput>;
 export type SetupStatus = Static<typeof SetupStatus>;
 export type StarterTemplate = Static<typeof StarterTemplate>;

@@ -1,0 +1,1 @@
+alter table `set_log` add `exercise_id` integer references exercise(id);

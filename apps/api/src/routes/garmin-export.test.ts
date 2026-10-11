@@ -89,7 +89,7 @@ describe('export', () => {
     const body = res.json<{ exported_at: string; tables: Record<string, unknown[]> }>();
     expect(Object.keys(body.tables)).toHaveLength(17);
     expect(body.tables.athlete).toMatchObject([{ display_name: 'Test Runner' }]);
-    expect(body.tables.exercise).toHaveLength(12);
+    expect(body.tables.exercise).toHaveLength(24);
   });
 
   it('exports one table as CSV with a header row', async () => {

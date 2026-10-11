@@ -128,14 +128,14 @@ describe('starter template', () => {
     );
     expect(first.body.created).toEqual({
       habits: 4,
-      exercises: 12,
+      exercises: 24,
       programme_days: 2,
       programme_slots: 12,
       session_templates: 8,
       fixtures: 10,
       blocks: 1,
     });
-    expect(first.body.changes).toBe(49);
+    expect(first.body.changes).toBe(61);
 
     const second = await fresh.call<ApplyTemplateResult>(
       'POST',
