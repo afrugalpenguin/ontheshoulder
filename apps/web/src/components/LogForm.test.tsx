@@ -34,15 +34,58 @@ describe('LogForm', () => {
     });
   });
 
+  it('a time-boxed run is pre-filled at the midpoint and logs in one tap', async () => {
+    const { onSubmit, user } = setup(session('run', 'Long run', { min_min: 50, max_min: 60 }));
+    expect(value('Minutes')).toBe('55');
+    await save(user);
+    expect(onSubmit).toHaveBeenCalledWith({
+      date: '2031-01-06',
+      kind: 'run',
+      planned_session_id: 7,
+      duration_min: 55,
+      rpe: null,
+      notes: null,
+    });
+  });
+
+  it('a run takes an optional "how was it" chip, and a second tap takes it back', async () => {
+    const { onSubmit, user } = setup(session('run', 'Midweek run', { min_min: 40, max_min: 50 }));
+    const chips = screen.getByRole('group', { name: 'How was it' });
+    expect([...chips.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
+      'good',
+      'fine',
+      'grim',
+    ]);
+    await user.click(screen.getByRole('button', { name: 'grim' }));
+    await save(user);
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ duration_min: 45, detail: { feel: 'grim' } }),
+    );
+    await user.click(screen.getByRole('button', { name: 'grim' }));
+    await save(user);
+    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty('detail');
+  });
+
+  it('a run asks for minutes, effort and the chips, and nothing else', () => {
+    setup(session('run', 'Midweek run', { min_min: 40, max_min: 50 }));
+    expect(screen.getAllByRole('textbox').map((el) => el.getAttribute('aria-label'))).toEqual([
+      'Minutes',
+      'RPE',
+    ]);
+    for (const field of [/pace/i, /distance/i, /heart/i, /hr/i, /notes/i]) {
+      expect(screen.queryByLabelText(field)).toBeNull();
+    }
+  });
+
   it('minutes and effort move with the steppers, and the note is trimmed', async () => {
-    const { onSubmit, user } = setup(session('run', 'Midweek run', { duration_min: 45 }));
+    const { onSubmit, user } = setup(session('ride', 'Long ride', { duration_min: 45 }));
     await user.click(screen.getByRole('button', { name: 'Decrease Minutes' }));
     await user.click(screen.getByRole('button', { name: 'Increase RPE' }));
     await user.click(screen.getByRole('button', { name: 'Increase RPE' }));
     await user.type(screen.getByLabelText('Notes'), '  steady  ');
     await save(user);
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'run', duration_min: 40, rpe: 6, notes: 'steady' }),
+      expect.objectContaining({ kind: 'ride', duration_min: 40, rpe: 6, notes: 'steady' }),
     );
   });
 
@@ -57,8 +100,8 @@ describe('LogForm', () => {
     );
   });
 
-  it('has only minutes, effort and notes: no pace, distance or heart rate', () => {
-    setup(session('run', 'Midweek run', { duration_min: 45 }));
+  it('anything but a run has minutes, effort and notes', () => {
+    setup(session('swim', 'Swim', { duration_min: 45 }));
     expect(screen.getAllByRole('textbox').map((el) => el.getAttribute('aria-label'))).toEqual([
       'Minutes',
       'RPE',

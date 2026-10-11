@@ -1,5 +1,5 @@
 import type { Habit, WeekSession } from '@ots/shared';
-import { KIND_LABEL, targetText } from './format.js';
+import { KIND_LABEL, targetText, timeboxText } from './format.js';
 
 /** The habit ticked from the evening banner. It is recorded on the next day's check-in. */
 export const KIT_READY = 'kit_ready';
@@ -15,7 +15,7 @@ type Planned = Pick<WeekSession, 'targets' | 'template' | 'status'>;
 /** "run, 50 to 60 min" for one session. */
 function describe(session: Planned): string {
   const kind = KIND_LABEL[session.template.kind].toLowerCase();
-  const target = targetText(session);
+  const target = timeboxText(session.targets) ?? targetText(session);
   return target ? `${kind}, ${target}` : kind;
 }
 

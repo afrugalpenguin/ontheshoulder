@@ -72,12 +72,19 @@ export function mmss(seconds: number): string {
 export const isContinuous = (t: Targets): boolean =>
   t.repeats === 1 && (t.walk_block_sec ?? 0) === 0 && t.run_block_sec != null;
 
+/** "50 to 60 min" for a time box, or null when the session is not one. */
+export function timeboxText(t: Targets): string | null {
+  return t.min_min != null && t.max_min != null ? `${t.min_min} to ${t.max_min} min` : null;
+}
+
 /** One line saying what the session asks for, for example "8 x 2:00 / 1:00" or "60 min, 20kg". */
 export function targetText(session: Pick<WeekSession, 'targets' | 'template'>): string {
   const t = session.targets;
   const minutes = t.duration_min != null ? `${t.duration_min} min` : '';
+  const box = timeboxText(t);
   switch (session.template.kind) {
     case 'run':
+      if (box) return `${box}, your pace`;
       if (isContinuous(t)) return `${Math.round((t.run_block_sec as number) / 60)} min continuous`;
       if (t.repeats != null && t.run_block_sec != null) {
         return `${t.repeats} x ${mmss(t.run_block_sec)} / ${mmss(t.walk_block_sec ?? 0)}`;
@@ -88,7 +95,7 @@ export function targetText(session: Pick<WeekSession, 'targets' | 'template'>): 
       return minutes ? `${minutes}, ${vest}` : vest;
     }
     default:
-      return minutes;
+      return box ?? minutes;
   }
 }
 

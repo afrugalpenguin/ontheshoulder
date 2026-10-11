@@ -30,6 +30,9 @@ const event = (over: Partial<Event>): Event => ({
 
 describe('targetText', () => {
   it.each([
+    [session('run', 'Midweek run', { min_min: 40, max_min: 50 }), '40 to 50 min, your pace'],
+    [session('run', 'Long run', { min_min: 50, max_min: 60 }), '50 to 60 min, your pace'],
+    [session('walk', 'Walk', { min_min: 30, max_min: 40 }), '30 to 40 min'],
     [
       session('run', 'Midweek run', { repeats: 8, run_block_sec: 120, walk_block_sec: 60 }),
       '8 x 2:00 / 1:00',
