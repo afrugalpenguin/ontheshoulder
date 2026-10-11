@@ -40,7 +40,7 @@ export function Chart({ title, data, styles, stacked, emptyText }: Props) {
     const color = (name: string) => css.getPropertyValue(name).trim() || '#888';
     const axis = {
       stroke: color('--muted'),
-      grid: { stroke: color('--line'), width: 1 },
+      grid: { stroke: color('--border'), width: 1 },
       ticks: { show: false },
     };
 
