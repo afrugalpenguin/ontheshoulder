@@ -22,6 +22,8 @@ docs/               spec, decisions, plan seed, build prompts
 
 ## Run (target)
 
+Needs Node 22 or newer. `corepack enable` once puts the pinned `pnpm` on your path. Settings are optional; see `.env.example`.
+
 ```
 pnpm install
 pnpm dev            # api on :3001, web on :5173, both bound to 0.0.0.0
