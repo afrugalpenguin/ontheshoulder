@@ -2,10 +2,10 @@
 
 Things noticed and deliberately not done yet. Add a line, do not do the work in the current stage.
 
-- Shoe rotation tracking (mileage per pair) for the Escalante reintroduction in Block 2
+- Shoe rotation tracking (mileage per pair) for the low-stack shoe reintroduction in Block 2
 - Back-to-back long run rules for Block 3
 - Garmin CSV import fallback if the unofficial client breaks (SPEC 7.4)
-- HTTPS on the LAN via mkcert so the app can install as a PWA
+- HTTPS on the LAN so the app can install as a PWA and keep the screen awake. Approach: `mkcert -install` on the PC, `mkcert <pc-lan-address> localhost` for a certificate, pass key and cert to Fastify through `https` options (new `OTS_TLS_KEY` and `OTS_TLS_CERT` settings), then install the mkcert root CA on the phone (emailed or served once) and trust it in the phone settings. Not done in v1; no service worker either
 - iOS Safari audio and vibration limitations in the timer, if an iPhone is ever used
 - Read-only progress view for someone else
 - Stage 10: when api routes move under `/api`, remove the prefix rewrite in `apps/web/vite.config.ts`

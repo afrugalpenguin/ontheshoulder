@@ -7,7 +7,7 @@ One line per decision, newest at the bottom. Date, decision, reason. Reversible 
 - 2026-10-11: Garmin via `python-garminconnect` 0.3.x, treated as a best-effort feed. Garmin offers no personal API; the March 2026 auth change killed `garth`, so isolate the risk in its own process and fail closed.
 - 2026-10-11: No service worker or PWA install in v1. LAN http is not a secure context; bookmark is enough.
 - 2026-10-11: Progression rules stored as JSON on the block, interpreted by a pure engine with table tests. Tuning without deploying.
-- 2026-10-11: Race date is a placeholder (2027-09-25) flagged unconfirmed until the event is chosen.
+- 2026-10-11: The race date is entered at setup and flagged unconfirmed until the event is chosen.
 - 2026-10-11: v0.2. No injury gating anywhere; the app records and shows, the user judges. Progression is calendar-driven and editable.
 - 2026-10-11: Runs are recorded on the watch. The app timer covers vest walks and strength rest only.
 - 2026-10-11: Sunday sessions are optional by rule: done is a bonus, missed never fails the week. Compliance is weekday-based.
