@@ -44,3 +44,6 @@ __pycache__/
 # playwright
 e2e-results/
 playwright-report/
+
+# your own list for scripts/check-no-personal-data.sh; never commit it
+.personal-terms
