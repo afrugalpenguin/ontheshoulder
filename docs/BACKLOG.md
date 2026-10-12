@@ -49,3 +49,9 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - The old data folder is never cleaned up after a move; there is no "remove the old copy" action
 - `OTS_HOST` and `OTS_LOG_DIR` are not in the config file
 - The scheduled task's restart loop and `Restart=always` were not exercised with a real task or unit, only with a stand-in supervisor
+- `docs/SPEC.md` 8 still opens with "Five tabs: Today, Week, ..."; there are four and no Today. 8.4 and 8.7 also predate v1.1
+- The README feature list still says "Today"
+- A check-in opened again by hand has no way to fold it other than leaving the page
+- On Week, today's row is scrolled to the top on load, so the short header starts off screen on a phone; decide whether that still earns its place
+- Past weeks never say "to do"; only earlier days of the current week do
+- `wellbeing` data (sleep, energy, run RPE per day) is still computed by `/trends/daily` with no chart reading it
