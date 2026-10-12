@@ -43,6 +43,7 @@ export interface MetricRow {
 
 export interface WeekCompliance {
   complete: boolean;
+  sessions_planned: number;
   optional_planned: number;
   optional_done: number;
 }

@@ -419,6 +419,8 @@ export const TrendWeek = Type.Object({
   vest_walk_hours: Type.Number(),
   strength_sessions: Type.Integer(),
   complete: Type.Boolean(),
+  /** Sessions planned that week; 0 for a week with no plan. */
+  sessions_planned: Type.Integer(),
   optional_planned: Type.Integer(),
   optional_done: Type.Integer(),
   /** Mean of the ankle scores entered that week; null when none were. */

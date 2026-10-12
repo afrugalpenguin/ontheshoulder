@@ -104,6 +104,7 @@ export const trendRoutes: FastifyPluginAsyncTypebox = async (app) => {
           const c = weekCompliance(db, isoWeek);
           return {
             complete: c.complete,
+            sessions_planned: c.sessions_planned,
             optional_planned: c.optional_planned,
             optional_done: c.optional_done,
           };

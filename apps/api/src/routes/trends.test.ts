@@ -30,6 +30,7 @@ describe('GET /trends/weekly', () => {
       vest_walk_hours: 3,
       strength_sessions: 2,
       complete: true,
+      sessions_planned: 9,
       optional_planned: 1,
       optional_done: 1,
       ankle_mean: 1.29,

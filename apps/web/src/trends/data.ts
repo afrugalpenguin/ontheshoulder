@@ -58,32 +58,9 @@ export function volumeChart(weeks: TrendWeek[]): ChartData {
   };
 }
 
-/** Garmin metrics shown on the sleep chart, when the sidecar has written any. */
-const WELLBEING_METRICS: [metric: string, label: string][] = [
-  ['sleep_score', 'Garmin sleep score'],
-  ['hrv', 'HRV'],
-];
-
-/** Sleep and energy as 7-day rolling means, run RPE as points, Garmin sleep and HRV if present. */
-export function wellbeingChart(days: TrendDay[]): ChartData {
-  const sleep = rolling(days.map((d) => d.sleep_quality));
-  const energy = rolling(days.map((d) => d.energy));
-  const rpe = days.map((d) => d.run_rpe);
-  const series: Series[] = [
-    { label: 'Sleep (7-day)', values: sleep },
-    { label: 'Energy (7-day)', values: energy },
-    { label: 'Run RPE', values: rpe },
-  ];
-  for (const [metric, label] of WELLBEING_METRICS) {
-    const values = days.map((d) => d.metrics[metric] ?? null);
-    if (anyValue(values)) series.push({ label, values });
-  }
-  return {
-    x: days.map((d) => toX(d.date)),
-    series,
-    empty: !anyValue(sleep) && !anyValue(energy) && !anyValue(rpe),
-  };
-}
+/** A week with nothing planned and nothing complete: drawn as an empty cell in the grid. */
+export const isUnplanned = (week: Pick<TrendWeek, 'sessions_planned' | 'complete'>): boolean =>
+  week.sessions_planned === 0 && !week.complete;
 
 /** Weight as entered, and its 7-day rolling mean. */
 export function weightChart(days: TrendDay[]): ChartData {

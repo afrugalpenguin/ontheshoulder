@@ -1,6 +1,7 @@
 import type { TrendDay, TrendWeek } from '@ots/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  isUnplanned,
   latest,
   liftsChart,
   rangeFor,
@@ -8,7 +9,6 @@ import {
   toX,
   volumeChart,
   weightChart,
-  wellbeingChart,
 } from './data.js';
 import { reviewSentences } from './review.js';
 
@@ -19,6 +19,7 @@ const week = (over: Partial<TrendWeek>): TrendWeek => ({
   vest_walk_hours: 3,
   strength_sessions: 2,
   complete: true,
+  sessions_planned: 9,
   optional_planned: 1,
   optional_done: 0,
   ankle_mean: 1.5,
@@ -147,30 +148,10 @@ describe('chart data', () => {
     expect(volumeChart([week({ run_minutes: 0, vest_walk_hours: 0 })]).empty).toBe(true);
   });
 
-  it('wellbeing: rolling sleep and energy, RPE as points, Garmin only when present', () => {
-    const days = [
-      day('2031-01-06', { sleep_quality: 4, energy: 2 }),
-      day('2031-01-07', { sleep_quality: 2, energy: 4, run_rpe: 5 }),
-      day('2031-01-08'),
-    ];
-    const chart = wellbeingChart(days);
-    expect(chart.series).toEqual([
-      { label: 'Sleep (7-day)', values: [4, 3, 3] },
-      { label: 'Energy (7-day)', values: [2, 3, 3] },
-      { label: 'Run RPE', values: [null, 5, null] },
-    ]);
-
-    const withGarmin = wellbeingChart([
-      day('2031-01-06', { sleep_quality: 4, energy: 2, metrics: { sleep_score: 80, hrv: 55 } }),
-    ]);
-    expect(withGarmin.series.map((s) => s.label)).toEqual([
-      'Sleep (7-day)',
-      'Energy (7-day)',
-      'Run RPE',
-      'Garmin sleep score',
-      'HRV',
-    ]);
-    expect(wellbeingChart([day('2031-01-06')]).empty).toBe(true);
+  it('a week with no plan is an empty cell, not an open one', () => {
+    expect(isUnplanned(week({ sessions_planned: 0, complete: false }))).toBe(true);
+    expect(isUnplanned(week({ sessions_planned: 9, complete: false }))).toBe(false);
+    expect(isUnplanned(week({}))).toBe(false);
   });
 
   it('weight: the entries and their rolling mean', () => {

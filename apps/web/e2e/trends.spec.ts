@@ -118,7 +118,7 @@ async function seed(request: APIRequestContext) {
   }
 }
 
-test('trends: review card and five charts drawn from 90 days, in under a second', async ({
+test('trends: review card and the charts drawn from 90 days, in under a second', async ({
   page,
   request,
 }) => {
@@ -133,7 +133,9 @@ test('trends: review card and five charts drawn from 90 days, in under a second'
   const started = Date.now();
   await page.getByRole('link', { name: 'Trends' }).click();
   await page.getByRole('button', { name: '12 weeks' }).click();
-  const charts = ['Running and vest walks', 'Sleep and energy', 'Weight', 'Main lifts'];
+  const charts = ['Running and vest walks', 'Weight', 'Main lifts'];
+  // Sleep and energy are no longer asked for, so their chart is gone.
+  await expect(page.getByRole('region', { name: 'Sleep and energy' })).toHaveCount(0);
   for (const name of charts) {
     await expect(page.getByRole('region', { name }).locator('canvas')).toBeVisible();
   }

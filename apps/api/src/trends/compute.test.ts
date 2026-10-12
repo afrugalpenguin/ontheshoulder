@@ -40,6 +40,7 @@ const LIFTS: LiftRow[] = [
 
 const compliance = (isoWeek: string) => ({
   complete: isoWeek === '2031-W02',
+  sessions_planned: 10,
   optional_planned: 1,
   optional_done: isoWeek === '2031-W02' ? 1 : 0,
 });
@@ -70,6 +71,7 @@ describe('weeklyTrends', () => {
       vest_walk_hours: 1.92,
       strength_sessions: 2,
       complete: true,
+      sessions_planned: 10,
       optional_planned: 1,
       optional_done: 1,
       // Ankle scores entered: 2 and 1. The day with none does not count as zero.
@@ -89,6 +91,7 @@ describe('weeklyTrends', () => {
       vest_walk_hours: 0,
       strength_sessions: 0,
       complete: false,
+      sessions_planned: 10,
       optional_planned: 1,
       optional_done: 0,
       ankle_mean: null,
