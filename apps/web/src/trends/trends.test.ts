@@ -1,6 +1,7 @@
 import type { TrendDay, TrendWeek } from '@ots/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  answerLines,
   isUnplanned,
   latest,
   liftsChart,
@@ -25,6 +26,7 @@ const week = (over: Partial<TrendWeek>): TrendWeek => ({
   ankle_mean: 1.5,
   run_rpe_mean: 5,
   lifts: { 'Back squat': 62.5, Deadlift: 82.5 },
+  habit_answers: {},
   ...over,
 });
 
@@ -176,5 +178,56 @@ describe('chart data', () => {
     expect(liftsChart([week({ lifts: {} })]).empty).toBe(true);
     expect(latest(chart.series[1] as { label: string; values: (number | null)[] })).toBe(82.5);
     expect(latest({ label: 'x', values: [null, null] })).toBeNull();
+  });
+});
+
+describe('answerLines: the weeknights record', () => {
+  const asked = (monday: string) =>
+    [1, 2, 3, 4].map((offset) => {
+      const d = new Date(`${monday}T00:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + offset);
+      return d.toISOString().slice(0, 10);
+    });
+  const w = (iso_week: string, start_date: string, yes: number, no: number) =>
+    week({
+      iso_week,
+      start_date,
+      habit_answers: { alcohol_free: { dates: asked(start_date), yes, no } },
+    });
+  const weeks = [
+    w('2031-W01', '2030-12-30', 0, 0),
+    w('2031-W02', '2031-01-06', 3, 1),
+    w('2031-W03', '2031-01-13', 3, 0),
+    w('2031-W04', '2031-01-20', 1, 1),
+  ];
+  const lines = (today: string) =>
+    answerLines(weeks, 'alcohol_free', 'AF weeknights', today).map((l) => l.text);
+
+  it('counts the yes answers out of the four nights, newest week first', () => {
+    // Thursday of W04: Tuesday, Wednesday and Thursday mornings have come.
+    expect(lines('2031-01-23')).toEqual([
+      'AF weeknights: 1 of 4, 1 not recorded',
+      'AF weeknights: 3 of 4, 1 not recorded',
+      'AF weeknights: 3 of 4',
+    ]);
+  });
+
+  it('an unanswered morning is not recorded, never a drink, and a morning to come is not mentioned', () => {
+    // Wednesday of W04: both mornings so far are answered, the two to come say nothing.
+    expect(lines('2031-01-22')[0]).toBe('AF weeknights: 1 of 4');
+    // Monday of W04: nothing has been asked yet this week, so it has no line.
+    expect(lines('2031-01-20')).toHaveLength(2);
+  });
+
+  it('leaves out the weeks before the first answer, and says nothing with no answers at all', () => {
+    expect(lines('2031-01-26')).toHaveLength(3);
+    expect(
+      answerLines([weeks[0] as TrendWeek], 'alcohol_free', 'AF weeknights', '2031-01-26'),
+    ).toEqual([]);
+    expect(answerLines([week({})], 'alcohol_free', 'AF weeknights', '2031-01-26')).toEqual([]);
+  });
+
+  it('is plain words: no tick, cross, colour name or target', () => {
+    expect(lines('2031-01-26').join(' ')).toMatch(/^[A-Za-z0-9 :,]+$/);
   });
 });

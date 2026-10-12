@@ -100,3 +100,43 @@ export function latest(series: Series): number | null {
   }
   return null;
 }
+
+/** The two-answer habit that records weeknights, and what its line is called. */
+export const WEEKNIGHTS_HABIT = 'alcohol_free';
+export const WEEKNIGHTS_LABEL = 'AF weeknights';
+
+/**
+ * One plain line per week for a two-answer habit, newest first, for example
+ * "AF weeknights: 3 of 4" or "AF weeknights: 3 of 4, 1 not recorded". A morning
+ * with no answer is not recorded, never a "no"; a morning still to come is not
+ * mentioned. Weeks before the first answer are left out, and so is a week whose
+ * first asked morning has not arrived.
+ */
+export function answerLines(
+  weeks: TrendWeek[],
+  key: string,
+  label: string,
+  today: string,
+): { iso_week: string; start_date: string; text: string }[] {
+  const first = weeks.findIndex((w) => {
+    const a = w.habit_answers[key];
+    return a !== undefined && a.yes + a.no > 0;
+  });
+  if (first === -1) return [];
+  const lines = [];
+  for (const week of weeks.slice(first)) {
+    const answers = week.habit_answers[key];
+    if (!answers) continue;
+    const due = answers.dates.filter((d) => d <= today).length;
+    if (due === 0) continue;
+    const missing = Math.max(0, due - answers.yes - answers.no);
+    lines.push({
+      iso_week: week.iso_week,
+      start_date: week.start_date,
+      text:
+        `${label}: ${answers.yes} of ${answers.dates.length}` +
+        (missing > 0 ? `, ${missing} not recorded` : ''),
+    });
+  }
+  return lines.reverse();
+}

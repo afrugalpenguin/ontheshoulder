@@ -7,6 +7,9 @@ import { useNow } from '../lib/useNow.js';
 import { Chart, type SeriesStyle } from './Chart.js';
 import {
   RANGES,
+  WEEKNIGHTS_HABIT,
+  WEEKNIGHTS_LABEL,
+  answerLines,
   isUnplanned,
   liftsChart,
   rangeFor,
@@ -89,6 +92,7 @@ export function Trends() {
   const thisWeek = w.at(-1);
   const lastWeek = w.at(-2) ?? null;
   const failed = weekly.error ?? daily.error;
+  const weeknights = answerLines(w, WEEKNIGHTS_HABIT, WEEKNIGHTS_LABEL, today);
 
   return (
     <main>
@@ -119,6 +123,19 @@ export function Trends() {
         <section className="card" aria-label="Weekly review">
           <h2>This week against last</h2>
           <p className="review">{reviewSentences(thisWeek, lastWeek).join(' ')}</p>
+        </section>
+      )}
+
+      {/* A record, not a score: plain text, no chart, no colour, no target. */}
+      {weeknights.length > 0 && (
+        <section aria-label="Weeknights">
+          <ul className="plain quiet-lines">
+            {weeknights.map((line) => (
+              <li key={line.iso_week}>
+                Week of {shortDate(line.start_date)}. {line.text}
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
