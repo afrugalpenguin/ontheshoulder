@@ -12,7 +12,8 @@ export const rebuild100: StarterTemplateData = {
     'already in the week, and home strength kit. Two runs, two strength sessions, Sunday optional.',
 
   habits: [
-    { key: 'treadmill_done', label: 'Treadmill done' },
+    // Off: finishing a walk already counts as the treadmill morning.
+    { key: 'treadmill_done', label: 'Treadmill done', enabled: false },
     { key: 'alcohol_free', label: 'Alcohol free' },
     { key: 'prehab_done', label: 'Prehab done' },
     {

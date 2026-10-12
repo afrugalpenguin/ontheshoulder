@@ -1,44 +1,47 @@
 import type { Checkin, CheckinInput } from '@ots/shared';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HABITS, emptyCheckin } from '../test/fixtures.js';
-import { CheckinCard } from './CheckinCard.js';
+import { COLLAPSE_AFTER_MS, CheckinCard } from './CheckinCard.js';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 const MONDAY = '2031-01-06';
 const SUNDAY = '2031-01-12';
 
 function setup(checkin: Checkin = emptyCheckin(MONDAY), lastWeight: number | null = null) {
   const onSave = vi.fn<(changes: CheckinInput) => void>();
-  render(<CheckinCard checkin={checkin} habits={HABITS} lastWeight={lastWeight} onSave={onSave} />);
-  return { onSave, user: userEvent.setup() };
+  const view = render(
+    <CheckinCard checkin={checkin} habits={HABITS} lastWeight={lastWeight} onSave={onSave} />,
+  );
+  const show = (next: Checkin) =>
+    view.rerender(
+      <CheckinCard checkin={next} habits={HABITS} lastWeight={lastWeight} onSave={onSave} />,
+    );
+  return { onSave, show, user: userEvent.setup() };
 }
 
 describe('CheckinCard', () => {
-  it('has no Save button: each tap saves just that field', async () => {
+  it('is weight and habit chips only, with no Save button: each tap saves just that field', async () => {
     const { onSave, user } = setup();
     expect(screen.queryByRole('button', { name: /save/i })).toBeNull();
+    // Sleep, energy and the ankle score are no longer asked for.
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.queryByText(/Sleep|Energy|Ankle/)).toBeNull();
 
-    await user.click(screen.getByRole('radio', { name: 'Sleep 4' }));
-    expect(onSave).toHaveBeenLastCalledWith({ sleep_quality: 4 });
-    await user.click(screen.getByRole('radio', { name: 'Energy 3' }));
-    expect(onSave).toHaveBeenLastCalledWith({ energy: 3 });
     await user.click(screen.getByRole('button', { name: 'Alcohol free' }));
     expect(onSave).toHaveBeenLastCalledWith({ habits: { alcohol_free: true } });
-    await user.click(screen.getByRole('radio', { name: 'Ankle 0' }));
-    expect(onSave).toHaveBeenLastCalledWith({ ankle_score: 0 });
-    expect(onSave).toHaveBeenCalledTimes(4);
+    await user.click(screen.getByRole('button', { name: 'Increase Weight' }));
+    expect(onSave).toHaveBeenLastCalledWith({ weight_kg: 70 });
+    expect(onSave).toHaveBeenCalledTimes(2);
   });
 
   it('shows what is saved, and a second tap on a habit unticks it', async () => {
-    const { onSave, user } = setup(
-      emptyCheckin(MONDAY, { sleep_quality: 2, habits: { alcohol_free: true } }),
-    );
-    expect(screen.getByRole('radio', { name: 'Sleep 2' }).getAttribute('aria-checked')).toBe(
-      'true',
-    );
+    const { onSave, user } = setup(emptyCheckin(MONDAY, { habits: { alcohol_free: true } }));
     const habit = screen.getByRole('button', { name: 'Alcohol free' });
     expect(habit.getAttribute('aria-pressed')).toBe('true');
     await user.click(habit);
@@ -55,25 +58,47 @@ describe('CheckinCard', () => {
     expect(onSave).toHaveBeenLastCalledWith({ weight_kg: 71.1 });
   });
 
-  it('records the same weight as last time in one tap', async () => {
-    const { onSave, user } = setup(emptyCheckin(MONDAY), 71.2);
+  it('records the same weight as last time in one tap and folds at once', async () => {
+    const { onSave, show, user } = setup(emptyCheckin(MONDAY), 71.2);
     await user.click(screen.getByRole('button', { name: 'Same today' }));
     expect(onSave).toHaveBeenLastCalledWith({ weight_kg: 71.2 });
+    show(emptyCheckin(MONDAY, { weight_kg: 71.2 }));
+    expect(screen.getByRole('button', { name: '71.2 kg' })).toBeTruthy();
+    expect(screen.queryByRole('textbox', { name: 'Weight' })).toBeNull();
   });
 
-  it('a recorded weight is shown as recorded', () => {
-    setup(emptyCheckin(MONDAY, { weight_kg: 70.4 }), 71.2);
+  it('with a weight already saved it is one line saying what is recorded', () => {
+    setup(emptyCheckin(MONDAY, { weight_kg: 77, habits: { protein_shake: true } }), 71.2);
+    const line = screen.getByRole('button', { name: '77.0 kg · protein shake' });
+    expect(line.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('group', { name: 'Habits' })).toBeNull();
+  });
+
+  it('stays open while the weight is being stepped, then folds; opened by hand it stays open', () => {
+    vi.useFakeTimers();
+    const { show } = setup();
+    show(emptyCheckin(MONDAY, { weight_kg: 70 }));
+    act(() => void vi.advanceTimersByTime(COLLAPSE_AFTER_MS - 1));
+    // Another step before the pause is over starts the wait again.
+    show(emptyCheckin(MONDAY, { weight_kg: 70.1 }));
+    act(() => void vi.advanceTimersByTime(COLLAPSE_AFTER_MS - 1));
+    expect(screen.getByRole('textbox', { name: 'Weight' })).toBeTruthy();
+    act(() => void vi.advanceTimersByTime(1));
+    const line = screen.getByRole('button', { name: '70.1 kg' });
+
+    fireEvent.click(line);
     expect((screen.getByRole('textbox', { name: 'Weight' }) as HTMLInputElement).value).toBe(
-      '70.4',
+      '70.1',
     );
-    expect(screen.queryByRole('button', { name: 'Same today' })).toBeNull();
+    show(emptyCheckin(MONDAY, { weight_kg: 70.2 }));
+    act(() => void vi.advanceTimersByTime(COLLAPSE_AFTER_MS * 2));
+    expect(screen.getByRole('textbox', { name: 'Weight' })).toBeTruthy();
   });
 
-  it('leaves out the kit habit, which belongs to the evening banner', () => {
+  it('leaves out a habit that is switched off, and the kit habit, which belongs to the evening banner', () => {
     setup();
     const habits = screen.getByRole('group', { name: 'Habits' });
     expect([...habits.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
-      'Treadmill done',
       'Alcohol free',
       'Prehab done',
       'Protein shake',

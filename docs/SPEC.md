@@ -143,19 +143,20 @@ Mobile-first, dark by default, large targets, no precise taps. Five tabs: Today,
 
 If no Athlete row exists, the app shows setup: name, A event (name, date, distance, time limit), equipment (plates, bar, dumbbells, kettlebells, vest; each can be none), fixtures (pick a starter template or build the week by hand), data folder confirmation. Finishes by generating the first week. Everything is editable later in Settings.
 
-### 8.2 Today
+### 8.2 The day
 
-- Date, countdown to the A event (weeks and days), "next up" line for the nearest B or C event, week compliance so far.
-- Prompts strip: any enabled habit with `prompt_text` whose `prompt_until` has not passed and whose tick is not set shows as a single-line banner with a Done button and a "not today" dismiss. Protein shake is the seeded one.
-- Check-in strip until done: sleep and energy as 1 to 5 rows, weight, habits as checkboxes, ankle 0 to 5 as a small optional row, and on Sundays a "got up for it" toggle. One Save.
-- Session cards in slot order. Actions: Log (quick form, kind-specific fields pre-filled from the template structure), Skip (reason list), and for strength and vest walks Start (opens the timer screen). Sunday cards show an "optional" tag.
+There is no Today tab: Week (8.5) is home and today's row is open. An open day shows, in this order:
+
+- Prompts strip (today only): any enabled habit with `prompt_text` whose `prompt_until` has not passed and whose tick is not set shows as a single-line banner with a Done button and a "not today" dismiss. Protein shake is the seeded one. It is a nag and stays first.
+- Session cards in slot order. Each has one primary button that depends on the kind: Start for strength (opens the session screen), Log for a run, ride or swim (a short form pre-filled from the plan), Done for everything else. A walk or vest walk is Done in one tap, which logs the planned duration and the planned vest weight with no form; a smaller Start timer button beside it opens the timer. The overflow holds Skip (reason list) and "Log different time" (the log form). Sunday cards show an "optional" tag. The buttons work on any day, so an earlier day's session can be done, logged or skipped late.
+- Check-in card last (today only): weight, then one chip per enabled habit, and on Sundays a "got up for it" chip. Every tap saves; there is no Save. Once a weight is saved for the day the card folds to one line that says what is recorded ("77.0 kg · protein shake"); a tap opens it again. Sleep, energy and the ankle score are no longer asked for: the columns, any saved values and the api fields stay.
 - Garmin strip only if the sidecar is configured; otherwise absent.
 
 ### 8.3 Timer
 
 One screen, two modes:
 
-- **Interval**: for vest walks and any structured session done without the watch. Phases from the template structure, big digits, wake lock, Web Audio tones and vibration where supported, pause, skip phase, end early. Finish pre-fills the log.
+- **Interval**: for vest walks and any structured session done without the watch. Phases from the template structure, big digits, wake lock, Web Audio tones and vibration where supported, pause, skip phase, end early. Finish pre-fills the log. A timer finished with less than 5 minutes on the clock was probably a slip, so its time is not saved without asking: "Log the planned 60 min instead?" offers the planned duration or the actual time, and nothing is saved until one is chosen. From 5 minutes on, ending early logs the time on the clock as before.
 - **Rest**: embedded in the strength screen. Starts on set completion, counts down the slot's rest_sec, cue at 10s and 0s, tap to skip.
 
 ### 8.4 Strength
@@ -169,16 +170,22 @@ The screen that must require no thinking:
 
 ### 8.5 Week
 
-Vertical list on phone, seven columns on desktop. Planned versus done with status colours. Generate next, regenerate this (confirm on edits), compliance summary.
+Home. One layout at every width: a single centred column about 480px wide, the phone layout; there is no seven-column desktop view.
+
+- Header: the title is the date range ("12 to 18 Oct") with the ISO week as small muted text under it, between the previous and next week buttons. Below it the A event countdown, then one line combining compliance, run minutes and streaks, for example "Key sessions 1 of 3 · mornings 2 of 4 · run 45 min · 3 weeks in a row". Any part with nothing to say yet is left out: no count of zero, no streak of zero, no "run 0 min", and nothing about an optional session that has not been done. A brand-new week shows no line at all.
+- Seven day rows. A closed day is one line: the day and a chip per session, coloured by status. Today is open (8.2); any day opens on a tap. On an earlier day of the current week a session still planned says "to do" on its chip, and opening the day lets it be done, logged or skipped.
+- From 20:00 tomorrow's row opens with a quiet line about what is planned and a kit tick.
+- Under the days: why these targets, and the plan actions: generate next, regenerate this (confirm on edits).
 
 ### 8.6 Trends
 
 - Weekly run minutes and vest-walk hours, stacked bars, ankle score mean as a faint line if any scores exist
-- Sleep quality and energy (and Garmin sleep and HRV if present), 7-day rolling, with run RPE as points
 - Weight with 7-day rolling mean
-- Compliance grid per week, Sunday shown as a separate dot
+- Compliance grid per week, Sunday shown as a separate dot. A week with nothing planned, such as one before the first planned week, is an empty cell
 - Main lift working weights over time (squat, deadlift)
 - A weekly review card with templated sentences comparing this week to last
+
+There is no sleep and energy chart: the check-in stopped asking for them (8.2). Run RPE was only drawn there, so it is no longer charted; it is still stored and still in the weekly review.
 
 ### 8.7 Settings
 

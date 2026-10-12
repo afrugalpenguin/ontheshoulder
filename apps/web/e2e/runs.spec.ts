@@ -77,7 +77,7 @@ test('time box: two weeks the same, and a run logged in two taps plus the chip',
   expect(taps).toBe(2);
 
   await expect(run).toContainText('Done');
-  await expect(page.getByLabel('Week compliance')).toContainText('run 45 min');
+  await expect(page.getByLabel('This week so far')).toContainText(/run 45 min/i);
   const activities = await (
     await request.get(`${API}/activities?from=2031-02-25&to=2031-02-25&kind=run`)
   ).json();

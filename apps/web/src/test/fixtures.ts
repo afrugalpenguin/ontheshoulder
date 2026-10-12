@@ -9,7 +9,7 @@ export const HABITS: Habit[] = [
     label: 'Treadmill done',
     prompt_text: null,
     prompt_until: null,
-    enabled: true,
+    enabled: false,
   },
   {
     id: 2,

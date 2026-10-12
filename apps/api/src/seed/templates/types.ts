@@ -21,6 +21,8 @@ export interface StarterTemplateData {
     label: string;
     prompt_text?: string;
     prompt_until?: string;
+    /** False for a habit kept for its history but no longer asked. */
+    enabled?: boolean;
   }[];
   exercises: {
     name: string;

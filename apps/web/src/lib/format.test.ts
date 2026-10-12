@@ -2,8 +2,8 @@ import type { Compliance, Event } from '@ots/shared';
 import { describe, expect, it } from 'vitest';
 import { session } from '../test/fixtures.js';
 import {
-  complianceText,
   countdown,
+  dateRange,
   longDate,
   mmss,
   nextUpText,
@@ -11,6 +11,7 @@ import {
   shortDate,
   targetText,
   timeOfDay,
+  weekLine,
 } from './format.js';
 
 const event = (over: Partial<Event>): Event => ({
@@ -102,7 +103,7 @@ describe('events', () => {
   });
 });
 
-describe('complianceText', () => {
+describe('weekLine', () => {
   const base: Compliance = {
     iso_week: '2031-W02',
     complete: false,
@@ -117,26 +118,49 @@ describe('complianceText', () => {
     sessions_done: 3,
   };
 
-  it('lists what is done and to do, with Sunday apart', () => {
-    expect(complianceText(base)).toEqual({
-      main: 'So far: key sessions 1 of 2, mornings 2 of 4',
-      bonus: 'Bonus: not this week',
-    });
+  it('joins compliance, run minutes and streaks into one line', () => {
+    expect(weekLine(base, { runMinutes: 45, weeks: 3, mornings: { days: 2, capped: false } })).toBe(
+      'Key sessions 1 of 2 · mornings 2 of 4 · run 45 min · 3 weeks in a row · 2 mornings in a row',
+    );
+    expect(weekLine({ ...base, optional_done: 1 }, { weeks: 1 })).toBe(
+      'Key sessions 1 of 2 · mornings 2 of 4 · bonus done · 1 week in a row',
+    );
   });
 
-  it('says complete and reports a done bonus', () => {
-    const done = complianceText({ ...base, complete: true, optional_done: 1 });
-    expect(done.main).toMatch(/^Complete: /);
-    expect(done.bonus).toBe('Bonus done');
+  it('leaves out every part with nothing to say, and is null when nothing is left', () => {
+    const fresh: Compliance = {
+      ...base,
+      required: base.required.map((r) => ({ ...r, done: 0, met: false })),
+      treadmill: { days_done: 0, days_needed: 4, met: false },
+      sessions_done: 0,
+    };
+    expect(weekLine(fresh, { runMinutes: 0, weeks: 0, mornings: { days: 0, capped: false } })).toBe(
+      null,
+    );
+    // One thing done: only that part, and never a word about the optional session.
+    const line = weekLine(
+      { ...fresh, treadmill: { days_done: 1, days_needed: 4, met: false } },
+      { runMinutes: 0, weeks: 0, mornings: { days: 1, capped: true } },
+    );
+    expect(line).toBe('Mornings 1 of 4 · 1+ morning in a row');
+    expect(line).not.toMatch(/\b0\b|not this week/i);
   });
 
-  it('falls back to a plain count when the block has no rule, and no bonus without optional sessions', () => {
-    const plain = complianceText({
+  it('falls back to a plain count when the block has no rule', () => {
+    const plain = {
       ...base,
       required: [],
       treadmill: { days_done: 0, days_needed: 0, met: true },
       optional_planned: 0,
-    });
-    expect(plain).toEqual({ main: 'So far: 3 of 9 sessions', bonus: null });
+    };
+    expect(weekLine(plain)).toBe('3 of 9 sessions');
+    expect(weekLine({ ...plain, sessions_done: 0 })).toBe(null);
+  });
+});
+
+describe('dateRange', () => {
+  it('names the month once unless the week crosses into another', () => {
+    expect(dateRange('2031-01-06', '2031-01-12')).toBe('6 to 12 Jan');
+    expect(dateRange('2031-01-27', '2031-02-02')).toBe('27 Jan to 2 Feb');
   });
 });

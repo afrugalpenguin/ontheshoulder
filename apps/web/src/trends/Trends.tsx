@@ -7,11 +7,11 @@ import { useNow } from '../lib/useNow.js';
 import { Chart, type SeriesStyle } from './Chart.js';
 import {
   RANGES,
+  isUnplanned,
   liftsChart,
   rangeFor,
   volumeChart,
   weightChart,
-  wellbeingChart,
   type RangeWeeks,
 } from './data.js';
 import { reviewSentences } from './review.js';
@@ -22,13 +22,6 @@ const VOLUME: SeriesStyle[] = [
   { type: 'bar', color: '--accent', unit: ' min' },
   { type: 'bar', color: '--success', unit: ' min' },
   { type: 'line', color: '--fg', scale: 'y2', range: [0, 5], faint: true, dash: [4, 4] },
-];
-const WELLBEING: SeriesStyle[] = [
-  { type: 'line', color: '--accent', range: [1, 5] },
-  { type: 'line', color: '--warning', dash: [8, 5], range: [1, 5] },
-  { type: 'points', color: '--fg', scale: 'y2', range: [1, 10] },
-  { type: 'line', color: '--success', scale: 'y3', faint: true },
-  { type: 'line', color: '--muted', scale: 'y3', faint: true, dash: [2, 4] },
 ];
 const WEIGHT: SeriesStyle[] = [
   { type: 'points', color: '--muted', unit: 'kg' },
@@ -47,17 +40,23 @@ function ComplianceGrid({ weeks }: { weeks: TrendWeek[] }) {
         {weeks.map((w) => {
           const bonus =
             w.optional_planned === 0 ? '' : w.optional_done > 0 ? ', bonus done' : ', no bonus';
+          // A week with no plan, such as one before the first planned week, is neither.
+          const state = isUnplanned(w)
+            ? 'nothing planned'
+            : w.complete
+              ? 'complete'
+              : 'not complete';
           return (
             <li
               key={w.iso_week}
-              className={`week-cell${w.complete ? ' is-complete' : ''}`}
-              aria-label={`Week of ${shortDate(w.start_date)}: ${w.complete ? 'complete' : 'not complete'}${bonus}`}
+              className={`week-cell${w.complete ? ' is-complete' : ''}${isUnplanned(w) ? ' is-empty' : ''}`}
+              aria-label={`Week of ${shortDate(w.start_date)}: ${state}${bonus}`}
             >
               <span className="week-cell-date" aria-hidden="true">
                 {shortDate(w.start_date)}
               </span>
               <span className="week-cell-mark" aria-hidden="true">
-                {w.complete ? 'Done' : 'Open'}
+                {isUnplanned(w) ? '' : w.complete ? 'Done' : 'Open'}
               </span>
               {w.optional_done > 0 && <span className="bonus-dot" aria-hidden="true" />}
             </li>
@@ -71,7 +70,7 @@ function ComplianceGrid({ weeks }: { weeks: TrendWeek[] }) {
   );
 }
 
-/** Trends: a weekly review that takes two minutes. Five charts and a review card. */
+/** Trends: a weekly review that takes two minutes. Three charts, the compliance grid and a review card. */
 export function Trends() {
   const { today } = useNow();
   const [weeks, setWeeks] = useState<RangeWeeks>(8);
@@ -131,12 +130,6 @@ export function Trends() {
             styles={VOLUME}
             stacked
             emptyText="No runs or vest walks logged in this range."
-          />
-          <Chart
-            title="Sleep and energy"
-            data={wellbeingChart(d)}
-            styles={WELLBEING}
-            emptyText="No check-ins in this range."
           />
           <Chart
             title="Weight"

@@ -30,16 +30,31 @@ export function timerPlanFor(session: Timed): TimerPlan {
   };
 }
 
+/**
+ * A timer finished with less than this on the clock was most likely started or
+ * stopped by mistake, so its time is not saved without asking.
+ */
+export const SHORT_FINISH_SEC = 5 * 60;
+
+/** Whether to ask which time to log: the timer ran short and the plan has a duration to offer. */
+export const isShortFinish = (summary: TimerSummary, plannedMin: number | null): boolean =>
+  plannedMin !== null && summary.total_sec < SHORT_FINISH_SEC;
+
 export interface FinishForm {
   rpe: number | null;
   notes: string;
 }
 
-/** The activity to save when a timed session is finished. */
+/**
+ * The activity to save when a timed session is finished. `minutes` replaces the
+ * timed duration when the planned one was chosen instead; what the timer
+ * recorded is kept in the detail either way.
+ */
 export function finishPayload(
   session: Pick<WeekSession, 'id' | 'date' | 'targets' | 'template'>,
   summary: TimerSummary,
   form: FinishForm,
+  minutes?: number,
 ): ActivityInput {
   const detail: Record<string, unknown> = {
     timer: {
@@ -55,7 +70,7 @@ export function finishPayload(
     kind: session.template.kind,
     planned_session_id: session.id,
     // Minutes to one decimal place, from what was actually timed.
-    duration_min: Math.round(summary.total_sec / 6) / 10,
+    duration_min: minutes ?? Math.round(summary.total_sec / 6) / 10,
     rpe: form.rpe,
     notes: form.notes.trim() || null,
     detail,

@@ -62,6 +62,7 @@ export function applyTemplate(
           label: h.label,
           prompt_text: h.prompt_text ?? null,
           prompt_until: h.prompt_until ?? null,
+          enabled: h.enabled ?? true,
         })
         .run();
       created.habits++;
