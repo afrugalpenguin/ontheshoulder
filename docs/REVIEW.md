@@ -94,3 +94,32 @@ Written 2026-10-11 after a second unattended run: stages 11 to 15 from `docs/bui
 - PR: https://github.com/afrugalpenguin/ontheshoulder/pull/32. **Open**, CI green. Based on #30.
 - Look at: the move was run end to end in temp folders, including a restart onto the new folder, but never against the real install. While `OTS_DATA_DIR` is set the move is refused. The api task now runs the api in a loop so "Restart now" brings it back.
 - Manual checks outstanding: change the folder from the phone on the real install and restart; register the tasks for real (`install-tasks.ps1` has only ever been run with `-WhatIf`) and see the loop restart the api; "Copy diagnostics" over plain http.
+
+# v1.2
+
+Written 2026-10-12 after a third unattended run: stages 16 and 17 from `docs/build/v1.2/`. Each PR lists its acceptance criteria with the output that proves each ticked one, the screenshots asked for, and what was not checked on a phone.
+
+## Look at these first
+
+1. **Two PRs are open and stacked: #36, then #38.** Both have green CI and merge cleanly. #38 is based on #36's branch, so its diff is stage 17 only. Merge #36, retarget #38 to `main`, merge #38. Neither is merged, because each has phone checks only you can do.
+2. **Your data, and three steps after merging.** Nothing in this run touched the real data folder; migrations ran only against a copy of a v1.1 database built in a temp folder. Earlier the same morning, before the run, the dev server was started on the real folder at your request: that wrote `config.json` beside your data and took a backup, and the database is at `0003_warmups`. That server was stopped before the build began. After merging: (a) start the api, which runs migrations `0004` and `0005`; (b) run the command under "Picking up what is new in the starter template" in `docs/RUNBOOK.md` to add prehab; (c) on Week, Plan, "Regenerate this week". Until (b) and (c) there is no prehab card, and the old "Prehab done" chip is already gone.
+3. **Where the build departs from the briefs.** Stage 17's migration is `0005`, not `0004`, because stage 16 needed one first. The header leaves out "Key sessions 0 of 3" as well as the zero streaks, since the acceptance says a new install shows no zeros. With "Last night" showing, the check-in waits for that answer before it folds. The prehab template is named "Prehab" with a duration of 8 minutes. Each is a line in `docs/DECISIONS.md`.
+4. **Applying the starter template again behaves differently now.** On an install that already has a week it only schedules sessions the template has just added. Before, it would also have put back any starter session you had taken off your week. This is what makes step (b) safe.
+5. **The briefs are not in `main`.** `docs/build/v1.2/` is on the `docs/v1.2-briefs` branch with no PR, so both PRs point at a brief that `main` does not have yet. It was left alone.
+
+## Stage 16: week home, the day first
+
+- PR: https://github.com/afrugalpenguin/ontheshoulder/pull/36. **Open**, CI green.
+- Look at: both of the day's primary buttons are on the first screen at 390 x 844, with or without the header in view. A walk is one tap on Done; the timer is the smaller button beside it. The check-in folds 2.5 seconds after the last change to the weight, because plus and minus save on every tap. The spec sections 8.2, 8.3, 8.5 and 8.6 were rewritten, this time in the same PR.
+- Manual checks outstanding: Week on the phone in the morning with your real sessions; tick a walk with Done and undo it; start the timer, end it within a few seconds and read the question; step the weight and judge the fold; tick an earlier day's walk from its "to do" chip; Week at full width on the PC; the favicon on the phone.
+
+## Stage 17: habits by day, prehab card, alcohol without a score
+
+- PR: https://github.com/afrugalpenguin/ontheshoulder/pull/38. **Open**, CI green. Based on #36.
+- Look at: old alcohol ticks are read as answers, so a day ticked before is "Alcohol-free" and a day unticked by hand is "Had a drink". The Trends line always says "of 4" and calls an unanswered morning "not recorded". Prehab is left out of compliance and of the mornings streak, so ticking it alone does not make a treadmill morning.
+- Manual checks outstanding: the three steps in item 2 on the real install, then check the week is otherwise as you left it; Tuesday on the phone for the prehab list and "Last night"; that neither answer reads as right or wrong on the real screen; no "Last night" on Monday, Saturday or Sunday; the Trends line after a couple of real answers; the seven day toggles in Settings under a thumb.
+
+## Not done
+
+- The merged remote branches from v1.1 are still on the remote; deleting them is still refused on this PC.
+- `corepack enable` has still not been run, so `pnpm` is not on the path outside these sessions.
