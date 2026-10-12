@@ -94,6 +94,9 @@ test('first morning: setup, week, check-in, prompt, vest walk, compliance', asyn
   console.log(`first screen at 390 x 844: ${JSON.stringify(bottoms)}`);
   expect((bottoms.checkin?.y ?? 0) > (bottoms.ride_log?.y ?? Infinity)).toBe(true);
   await page.screenshot({ path: 'e2e-results/week-first-screen.png' });
+  // And from the top of the page, for the header.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: 'e2e-results/week-new-install.png' });
 
   // The protein prompt is live before noon; "not today" hides it.
   await expect(page.getByText('Oi. Protein.')).toBeVisible();
