@@ -94,6 +94,13 @@ describe('morningStreak', () => {
     expect(morningStreak(sessions, '2031-01-08', EARLIEST).days).toBe(1);
   });
 
+  it('does not count prehab as the morning', () => {
+    const prehab = { ...am('2031-01-07'), template: { kind: 'prehab' as const } };
+    const walk = { ...am('2031-01-06'), template: { kind: 'walk_vest' as const } };
+    expect(morningStreak([walk, prehab], '2031-01-08', EARLIEST).days).toBe(0);
+    expect(morningStreak([walk, prehab], '2031-01-07', EARLIEST).days).toBe(1);
+  });
+
   it('ignores evening sessions', () => {
     const sessions = [{ date: '2031-01-07', slot: 'pm' as const, status: 'done' as const }];
     expect(morningStreak(sessions, '2031-01-08', EARLIEST).days).toBe(0);

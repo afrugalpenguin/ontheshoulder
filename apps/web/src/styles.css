@@ -854,6 +854,46 @@ main.week {
   border-color: var(--accent);
 }
 
+/* A routine on a session card: one line per exercise, the dose on the right. */
+.routine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.routine li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.routine li .muted {
+  flex: none;
+  text-align: right;
+}
+
+/* A quiet text record under the review: no colour, no chart. */
+.quiet-lines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+/* Seven small toggles for the days a habit is asked on. */
+.weekday-toggles {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.weekday-toggles .chip {
+  padding: 0;
+  justify-content: center;
+}
+
 /* The check-in folded to one line once the day's weight is in. */
 .checkin-line {
   width: 100%;

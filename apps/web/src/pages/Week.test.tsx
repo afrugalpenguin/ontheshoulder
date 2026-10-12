@@ -117,16 +117,16 @@ describe('Week', () => {
   it('saves the check-in on each tap with no Save button', async () => {
     const api = open(at(6, 8));
     const checkin = await screen.findByRole('region', { name: 'Check-in' });
-    fireEvent.click(within(checkin).getByRole('button', { name: 'Alcohol free' }));
+    fireEvent.click(within(checkin).getByRole('button', { name: 'Protein shake' }));
     await waitFor(() =>
       expect(api.writes()).toEqual([
-        { method: 'PUT', path: '/checkins/2031-01-06', body: { habits: { alcohol_free: true } } },
+        { method: 'PUT', path: '/checkins/2031-01-06', body: { habits: { protein_shake: true } } },
       ]),
     );
     expect(within(checkin).queryByRole('button', { name: /save/i })).toBeNull();
     await waitFor(() =>
       expect(
-        within(checkin).getByRole('button', { name: 'Alcohol free' }).getAttribute('aria-pressed'),
+        within(checkin).getByRole('button', { name: 'Protein shake' }).getAttribute('aria-pressed'),
       ).toBe('true'),
     );
   });
@@ -273,6 +273,75 @@ describe('Week', () => {
     const card = await screen.findByRole('article', { name: 'Midweek run' });
     expect(card.textContent).toContain('40 to 50 min, your pace');
     expect(within(card).getByRole('button', { name: 'Log' })).toBeTruthy();
+  });
+
+  it('a prehab card lists its exercises from the template, always in view, and logs with one tap', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(7, 8));
+    const exercises = [
+      { name: 'Synthetic balance', dose: '30 s each' },
+      { name: 'Synthetic raises', dose: '3 x 12' },
+    ];
+    const prehab = session(
+      'prehab',
+      'Prehab',
+      { duration_min: 8 },
+      {
+        id: 5,
+        date: '2031-01-07',
+        template: {
+          key: 'prehab',
+          kind: 'prehab',
+          name: 'Prehab',
+          structure: { duration_min: 8, exercises },
+          programme_day_id: null,
+        },
+      },
+    );
+    const walk = session(
+      'walk',
+      'Treadmill walk',
+      { duration_min: 50 },
+      { id: 6, date: '2031-01-07' },
+    );
+    const api = stubApi({
+      '/weeks/2031-W02': { ...WEEK, sessions: [prehab, walk] },
+      '/habits': HABITS,
+    });
+    renderApp(<Week />);
+    const card = await screen.findByRole('article', { name: 'Prehab' });
+    // Above the treadmill walk, in the order the api gives.
+    const cards = screen.getAllByRole('article').map((a) => a.getAttribute('aria-label'));
+    expect(cards).toEqual(['Prehab', 'Treadmill walk']);
+    // The list is whatever the template holds, with nothing to expand.
+    const list = within(card).getByRole('list', { name: 'Prehab exercises' });
+    expect(
+      within(list)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Synthetic balance30 s each', 'Synthetic raises3 x 12']);
+    expect(card.querySelector('details')).toBeNull();
+    expect(within(card).queryByRole('link', { name: 'Start timer' })).toBeNull();
+
+    fireEvent.click(within(card).getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(api.writes()).toHaveLength(1));
+    expect(api.writes()[0]).toMatchObject({
+      method: 'POST',
+      path: '/activities',
+      body: { date: '2031-01-07', kind: 'prehab', planned_session_id: 5, duration_min: 8 },
+    });
+  });
+
+  it('on a Tuesday the check-in asks about last night, on a Monday it does not', async () => {
+    open(at(7, 8));
+    const tuesday = await screen.findByRole('region', { name: 'Check-in' });
+    expect(within(tuesday).getByRole('radiogroup', { name: 'Last night' })).toBeTruthy();
+    cleanup();
+    vi.unstubAllGlobals();
+    open(at(6, 8));
+    const monday = await screen.findByRole('region', { name: 'Check-in' });
+    expect(within(monday).queryByRole('radiogroup', { name: 'Last night' })).toBeNull();
+    expect(within(monday).getByRole('button', { name: 'Protein shake' })).toBeTruthy();
   });
 
   it('the header leaves out every part with nothing to say yet', async () => {
