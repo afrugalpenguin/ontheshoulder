@@ -6,7 +6,9 @@ import { expect, test } from '@playwright/test';
 // in one tap, watch the header line appear, then skip the optional Sunday run.
 // The browser clock starts on a synthetic Monday morning so the day has a vest
 // walk and the prompt is live. A second test comes back that evening for the
-// prompt about tomorrow, and a third looks at the page on a wide screen.
+// prompt about tomorrow, and a third looks at the page on a wide screen. Then
+// Tuesday and Friday: the prehab card above the morning's session, the question
+// about last night, and the weeknights line in Trends.
 
 const API = `http://127.0.0.1:${process.env.OTS_E2E_API_PORT ?? '3183'}/api`;
 const MONDAY_8AM = new Date(Date.UTC(2031, 0, 6, 8, 0, 0));
@@ -107,14 +109,17 @@ test('first morning: setup, week, check-in, prompt, vest walk, compliance', asyn
   // is no Save button, and the treadmill habit is not asked.
   await expect(checkin.getByRole('button', { name: /save/i })).toHaveCount(0);
   await expect(checkin.getByRole('radiogroup')).toHaveCount(0);
+  // Monday: weight and protein only. Last night is asked Tuesday to Friday, and
+  // prehab is a session on its own days, not a habit.
   await expect(checkin.getByRole('group', { name: 'Habits' }).getByRole('button')).toHaveText([
-    'Alcohol free',
-    'Prehab done',
     'Protein shake',
   ]);
-  await page.screenshot({ path: 'e2e-results/week-checkin-open.png', fullPage: true });
-  await checkin.getByRole('button', { name: 'Alcohol free' }).click();
-  await expect(checkin.getByRole('button', { name: 'Alcohol free' })).toHaveAttribute(
+  await expect(checkin).not.toContainText(/Last night|Alcohol|Prehab/);
+  await checkin.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await expect(checkin).toBeInViewport({ ratio: 1 });
+  await page.screenshot({ path: 'e2e-results/checkin-monday.png' });
+  await checkin.getByRole('button', { name: 'Protein shake' }).click();
+  await expect(checkin.getByRole('button', { name: 'Protein shake' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -123,7 +128,7 @@ test('first morning: setup, week, check-in, prompt, vest walk, compliance', asyn
   await checkin.getByRole('button', { name: 'Increase Weight' }).click();
 
   // With the weight in, the card folds to one line.
-  const folded = checkin.getByRole('button', { name: '70.1 kg · alcohol free' });
+  const folded = checkin.getByRole('button', { name: '70.1 kg · protein shake' });
   await expect(folded).toBeVisible();
   await expect(checkin.getByRole('textbox', { name: 'Weight' })).toHaveCount(0);
 
@@ -138,7 +143,7 @@ test('first morning: setup, week, check-in, prompt, vest walk, compliance', asyn
     energy: null,
     ankle_score: null,
     weight_kg: 70.1,
-    habits: { alcohol_free: true },
+    habits: { protein_shake: true },
     dismissed_prompts: ['protein_shake'],
   });
   const habits = await (await request.get(`${API}/habits`)).json();
@@ -225,4 +230,107 @@ test('on a wide screen Week is the same single centred column', async ({ page })
   expect(box.tuesday?.x).toBe(box.monday?.x);
   expect(box.tuesday?.y).toBeGreaterThan(box.monday?.y ?? Infinity);
   await page.screenshot({ path: 'e2e-results/week-1440.png' });
+});
+
+const TUESDAY_8AM = new Date(Date.UTC(2031, 0, 7, 8, 0, 0));
+const FRIDAY_8AM = new Date(Date.UTC(2031, 0, 10, 8, 0, 0));
+const EXERCISES = [
+  'Single-leg balance, eyes open then closed',
+  'Slow calf raises off a step, two up one down',
+  'Edge walking, outside then inside edges',
+  'Toe spreads and towel scrunches',
+  'Ankle circles and alphabet',
+];
+
+test('Tuesday: prehab above the run, done in one tap, and the question about last night', async ({
+  page,
+  request,
+}) => {
+  await page.clock.install({ time: TUESDAY_8AM });
+  await page.goto('/');
+  const tuesday = page.getByRole('region', { name: 'Tuesday 7 Jan' });
+  await expect(tuesday.getByRole('article')).toHaveText([/^PREPrehab/, /^RUNMidweek run/]);
+
+  // The five exercises and their doses are on the card, with nothing to open.
+  const prehab = tuesday.getByRole('article', { name: 'Prehab' });
+  const items = prehab.getByRole('list', { name: 'Prehab exercises' }).getByRole('listitem');
+  await expect(items).toHaveCount(5);
+  for (const [index, name] of EXERCISES.entries()) {
+    await expect(items.nth(index)).toContainText(name);
+    await expect(items.nth(index)).toBeInViewport({ ratio: 1 });
+  }
+  console.log(
+    `prehab card: ${(await items.allInnerTexts()).map((t) => t.replace(/\s+/g, ' ')).join(' | ')}`,
+  );
+  await page.screenshot({ path: 'e2e-results/prehab-tuesday.png' });
+
+  // Tuesday's check-in: weight, protein and Last night, two plain buttons.
+  const checkin = tuesday.getByRole('region', { name: 'Check-in' });
+  await expect(checkin.getByRole('group', { name: 'Habits' }).getByRole('button')).toHaveText([
+    'Protein shake',
+  ]);
+  const lastNight = checkin.getByRole('radiogroup', { name: 'Last night' });
+  await expect(lastNight.getByRole('radio')).toHaveText(['Alcohol-free', 'Had a drink']);
+  await checkin.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+  await expect(lastNight).toBeInViewport({ ratio: 1 });
+  await page.screenshot({ path: 'e2e-results/checkin-tuesday.png' });
+
+  // Both buttons look the same until one is chosen, and no warning or success colour is used.
+  const colours = await lastNight.getByRole('radio').evaluateAll((buttons) =>
+    buttons.map((b) => {
+      const style = getComputedStyle(b);
+      return `${style.backgroundColor} ${style.color} ${style.borderColor}`;
+    }),
+  );
+  expect(colours[0]).toBe(colours[1]);
+  await lastNight.getByRole('radio', { name: 'Last night Alcohol-free' }).click();
+  await expect(lastNight.getByRole('radio', { name: 'Last night Alcohol-free' })).toBeChecked();
+  const saved = await (await request.get(`${API}/checkins/2031-01-07`)).json();
+  console.log(`Tuesday check-in: ${JSON.stringify(saved.habits)}`);
+  expect(saved.habits).toMatchObject({ alcohol_free: true });
+
+  // One Done. It is not a treadmill morning, so the header line does not move.
+  const line = page.getByLabel('This week so far');
+  await expect(line).toHaveText('Mornings 1 of 4 · 1 morning in a row');
+  await prehab.getByRole('button', { name: 'Done' }).click();
+  await expect(prehab).toContainText('Done');
+  await expect(page.getByRole('status')).toContainText('Prehab logged');
+  await expect(line).toHaveText('Mornings 1 of 4 · 1 morning in a row');
+  const compliance = await (await request.get(`${API}/weeks/2031-W02/compliance`)).json();
+  console.log(`compliance after prehab done: ${JSON.stringify(compliance)}`);
+  expect(compliance.treadmill.days_done).toBe(1);
+});
+
+test('Friday: prehab above the treadmill walk, and the weeknights line in Trends', async ({
+  page,
+  request,
+}) => {
+  // Wednesday morning's answer, given the way the check-in gives it.
+  await request.put(`${API}/checkins/2031-01-08`, { data: { habits: { alcohol_free: false } } });
+
+  await page.clock.install({ time: FRIDAY_8AM });
+  await page.goto('/');
+  const friday = page.getByRole('region', { name: 'Friday 10 Jan' });
+  await expect(friday.getByRole('article')).toHaveText([
+    /^PREPrehab/,
+    /^WALKTreadmill walk/,
+    /^LIFTStrength B/,
+  ]);
+  const prehab = friday.getByRole('article', { name: 'Prehab' });
+  await expect(prehab.getByRole('listitem')).toHaveCount(5);
+  await expect(prehab.getByRole('listitem').last()).toBeInViewport({ ratio: 1 });
+  await page.screenshot({ path: 'e2e-results/prehab-friday.png' });
+
+  // Trends: one quiet line. Tuesday yes, Wednesday no, Thursday and Friday not
+  // answered: two not recorded, never counted as drinks.
+  await page.getByRole('link', { name: 'Trends' }).click();
+  const weeknights = page.getByRole('region', { name: 'Weeknights' });
+  await expect(weeknights.getByRole('listitem')).toHaveText([
+    'Week of 6 Jan. AF weeknights: 1 of 4, 2 not recorded',
+  ]);
+  console.log(`trends line: ${await weeknights.innerText()}`);
+  // Plain muted text: the same colour as any other muted line, no chart inside.
+  await expect(weeknights.locator('canvas')).toHaveCount(0);
+  await weeknights.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'e2e-results/trends-weeknights.png' });
 });

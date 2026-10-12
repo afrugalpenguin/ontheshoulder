@@ -55,3 +55,9 @@ Things noticed and deliberately not done yet. Add a line, do not do the work in 
 - On Week, today's row is scrolled to the top on load, so the short header starts off screen on a phone; decide whether that still earns its place
 - Past weeks never say "to do"; only earlier days of the current week do
 - `wellbeing` data (sleep, energy, run RPE per day) is still computed by `/trends/daily` with no chart reading it
+- A second two-answer habit would have counts in `/trends/weekly` but no line in Trends; the line and its name are fixed to `alcohol_free`
+- The evening line about tomorrow names prehab along with the session ("prehab, 8 min and run, 40 to 50 min"); decide whether it should
+- The prehab exercise list can only be edited through the api (`PATCH /session-templates/:id`); there is no editor in Settings
+- A two-answer habit cannot be cleared back to unanswered
+- The weekly review card in Trends still says "Bonus: not this week."
+- A `prehab` activity is logged with 8 minutes; nothing in Trends counts or shows prehab

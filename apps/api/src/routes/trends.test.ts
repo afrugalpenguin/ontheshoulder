@@ -36,6 +36,14 @@ describe('GET /trends/weekly', () => {
       ankle_mean: 1.29,
       run_rpe_mean: 5,
       lifts: { 'Back squat': 60, Deadlift: 80 },
+      // The seed answers nothing, so the four asked mornings are all unanswered.
+      habit_answers: {
+        alcohol_free: {
+          dates: ['2031-01-07', '2031-01-08', '2031-01-09', '2031-01-10'],
+          yes: 0,
+          no: 0,
+        },
+      },
     });
 
     // Week 1: no long run (odd week), run 36 min at RPE 5, lifts 2.5kg heavier.
@@ -50,6 +58,17 @@ describe('GET /trends/weekly', () => {
       lifts: { 'Back squat': 62.5, Deadlift: 82.5 },
     });
     expect(res.body[2]).toMatchObject({ run_minutes: 38 + 50, optional_done: 1 });
+  });
+
+  it('counts the answers to a two-answer habit on the mornings it is asked', async () => {
+    await t.call('PUT', '/checkins/2031-01-21', { habits: { alcohol_free: true } });
+    await t.call('PUT', '/checkins/2031-01-22', { habits: { alcohol_free: false } });
+    const res = await t.call<TrendWeek[]>('GET', '/trends/weekly?from=2031-01-20&to=2031-01-26');
+    expect(res.body[0]?.habit_answers.alcohol_free).toEqual({
+      dates: ['2031-01-21', '2031-01-22', '2031-01-23', '2031-01-24'],
+      yes: 1,
+      no: 1,
+    });
   });
 
   it('covers whole weeks when the range starts midweek', async () => {

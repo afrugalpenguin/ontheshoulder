@@ -11,6 +11,8 @@ afterEach(() => {
 });
 
 const MONDAY = '2031-01-06';
+const TUESDAY = '2031-01-07';
+const SATURDAY = '2031-01-11';
 const SUNDAY = '2031-01-12';
 
 function setup(checkin: Checkin = emptyCheckin(MONDAY), lastWeight: number | null = null) {
@@ -33,19 +35,19 @@ describe('CheckinCard', () => {
     expect(screen.queryByRole('radiogroup')).toBeNull();
     expect(screen.queryByText(/Sleep|Energy|Ankle/)).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Alcohol free' }));
-    expect(onSave).toHaveBeenLastCalledWith({ habits: { alcohol_free: true } });
+    await user.click(screen.getByRole('button', { name: 'Protein shake' }));
+    expect(onSave).toHaveBeenLastCalledWith({ habits: { protein_shake: true } });
     await user.click(screen.getByRole('button', { name: 'Increase Weight' }));
     expect(onSave).toHaveBeenLastCalledWith({ weight_kg: 70 });
     expect(onSave).toHaveBeenCalledTimes(2);
   });
 
   it('shows what is saved, and a second tap on a habit unticks it', async () => {
-    const { onSave, user } = setup(emptyCheckin(MONDAY, { habits: { alcohol_free: true } }));
-    const habit = screen.getByRole('button', { name: 'Alcohol free' });
+    const { onSave, user } = setup(emptyCheckin(MONDAY, { habits: { protein_shake: true } }));
+    const habit = screen.getByRole('button', { name: 'Protein shake' });
     expect(habit.getAttribute('aria-pressed')).toBe('true');
     await user.click(habit);
-    expect(onSave).toHaveBeenLastCalledWith({ habits: { alcohol_free: false } });
+    expect(onSave).toHaveBeenLastCalledWith({ habits: { protein_shake: false } });
   });
 
   it('weight starts from the last value and moves in 0.1 kg steps', async () => {
@@ -99,10 +101,61 @@ describe('CheckinCard', () => {
     setup();
     const habits = screen.getByRole('group', { name: 'Habits' });
     expect([...habits.querySelectorAll('button')].map((b) => b.textContent)).toEqual([
-      'Alcohol free',
-      'Prehab done',
       'Protein shake',
     ]);
+  });
+
+  it('shows a habit only on the days it is asked: Monday is weight and protein', () => {
+    setup(emptyCheckin(MONDAY));
+    expect(screen.getByRole('textbox', { name: 'Weight' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Protein shake' })).toBeTruthy();
+    expect(screen.queryByRole('radiogroup', { name: 'Last night' })).toBeNull();
+    expect(screen.queryByText(/Alcohol|drink|Prehab/)).toBeNull();
+  });
+
+  it.each([SATURDAY, SUNDAY, MONDAY])('asks nothing about last night on %s', (date) => {
+    setup(emptyCheckin(date));
+    expect(screen.queryByRole('radiogroup', { name: 'Last night' })).toBeNull();
+  });
+
+  it('on a Tuesday asks about last night with two plain buttons, neither chosen', () => {
+    setup(emptyCheckin(TUESDAY));
+    const group = screen.getByRole('radiogroup', { name: 'Last night' });
+    const answers = [...group.querySelectorAll('button')];
+    expect(answers.map((b) => b.textContent)).toEqual(['Alcohol-free', 'Had a drink']);
+    expect(answers.map((b) => b.getAttribute('aria-checked'))).toEqual(['false', 'false']);
+    // The same element and class for both: neither is a warning or a success, and no tick or cross.
+    expect(new Set(answers.map((b) => b.className)).size).toBe(1);
+    expect(answers.some((b) => /success|warning|danger/.test(b.className))).toBe(false);
+    expect(group.textContent).toBe('Last nightAlcohol-freeHad a drink');
+  });
+
+  it('saves true for the first answer and false for the second, and shows the one chosen', async () => {
+    const { onSave, show, user } = setup(emptyCheckin(TUESDAY));
+    await user.click(screen.getByRole('radio', { name: 'Last night Alcohol-free' }));
+    expect(onSave).toHaveBeenLastCalledWith({ habits: { alcohol_free: true } });
+    await user.click(screen.getByRole('radio', { name: 'Last night Had a drink' }));
+    expect(onSave).toHaveBeenLastCalledWith({ habits: { alcohol_free: false } });
+
+    show(emptyCheckin(TUESDAY, { habits: { alcohol_free: false } }));
+    const chosen = screen.getByRole('radio', { name: 'Last night Had a drink' });
+    const other = screen.getByRole('radio', { name: 'Last night Alcohol-free' });
+    expect(chosen.getAttribute('aria-checked')).toBe('true');
+    expect(other.getAttribute('aria-checked')).toBe('false');
+    // Chosen or not, the two buttons differ only in being chosen.
+    expect(chosen.className).toBe(other.className);
+  });
+
+  it('waits for the answer before it folds, and the line records it without comment', () => {
+    vi.useFakeTimers();
+    const { show } = setup(emptyCheckin(TUESDAY));
+    show(emptyCheckin(TUESDAY, { weight_kg: 70 }));
+    act(() => void vi.advanceTimersByTime(COLLAPSE_AFTER_MS * 2));
+    expect(screen.getByRole('radiogroup', { name: 'Last night' })).toBeTruthy();
+
+    show(emptyCheckin(TUESDAY, { weight_kg: 70, habits: { alcohol_free: false } }));
+    act(() => void vi.advanceTimersByTime(COLLAPSE_AFTER_MS));
+    expect(screen.getByRole('button', { name: '70.0 kg \u00b7 had a drink' })).toBeTruthy();
   });
 
   it('asks about getting up only on a Sunday', async () => {

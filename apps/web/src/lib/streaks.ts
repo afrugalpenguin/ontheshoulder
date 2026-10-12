@@ -17,10 +17,13 @@ export function completeWeekStreak(
   return streak;
 }
 
-type Done = Pick<WeekSession, 'date' | 'slot' | 'status'>;
+type Done = Pick<WeekSession, 'date' | 'slot' | 'status'> & {
+  template?: Pick<WeekSession['template'], 'kind'>;
+};
 
 /**
  * Consecutive weekdays, counting back from today, with a morning session done.
+ * Prehab does not make a morning: it is the eight minutes before the session.
  * Weekends are stepped over, and today does not break the run while it is still
  * open. Stops at `earliest`, the first date the sessions cover; `capped` says
  * the run reached that far and may be longer.
@@ -31,7 +34,9 @@ export function morningStreak(
   earliest: string,
 ): { days: number; capped: boolean } {
   const done = new Set(
-    sessions.filter((s) => s.slot === 'am' && s.status === 'done').map((s) => s.date),
+    sessions
+      .filter((s) => s.slot === 'am' && s.status === 'done' && s.template?.kind !== 'prehab')
+      .map((s) => s.date),
   );
   let days = 0;
   for (let date = today; date >= earliest; date = addDays(date, -1)) {

@@ -96,9 +96,9 @@ describe('export', () => {
     const res = await t.app.inject({ method: 'GET', url: '/api/export/csv/habit_definition' });
     expect(res.headers['content-type']).toContain('text/csv');
     const lines = res.body.trim().split('\r\n');
-    expect(lines[0]).toBe('id,key,label,prompt_text,prompt_until,enabled');
+    expect(lines[0]).toBe('id,key,label,prompt_text,prompt_until,enabled,weekdays,answer_labels');
     expect(lines).toHaveLength(6);
-    expect(lines[4]).toBe('4,protein_shake,Protein shake,Oi. Protein.,12:00,true');
+    expect(lines[4]).toBe('4,protein_shake,Protein shake,Oi. Protein.,12:00,true,,');
   });
 
   it('exports an empty table as just the header', async () => {

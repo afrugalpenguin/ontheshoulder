@@ -307,7 +307,7 @@ describe('rules dry run', () => {
     const dry = await t.call<GeneratedWeek>('POST', '/weeks/2031-W03/dry-run');
     expect(dry.status).toBe(200);
     expect(dry.body.persisted).toBe(false);
-    expect(dry.body.week.sessions).toHaveLength(10);
+    expect(dry.body.week.sessions).toHaveLength(12);
     expect(dry.body.week.reasoning).toContain(
       'Midweek run: 8 x 150s run / 60s walk, run block up 30s from last week.',
     );
@@ -350,7 +350,7 @@ describe('rules dry run', () => {
     await t.call('PATCH', `/planned-sessions/${first.id}`, { status: 'skipped' });
     const dry = await t.call<GeneratedWeek>('POST', '/weeks/2031-W02/dry-run');
     expect(dry.status).toBe(200);
-    expect(dry.body.week.sessions).toHaveLength(10);
+    expect(dry.body.week.sessions).toHaveLength(12);
     expect(dry.body.week.sessions.find((s) => s.id === first.id)?.status).toBe('skipped');
   });
 });

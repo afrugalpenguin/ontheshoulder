@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api.js';
 import { renderApp, stubApi } from '../test/api.js';
+import { HABITS } from '../test/fixtures.js';
 import { AboutSection, DataSection, bytesText, diagnosticsText } from './DataSection.js';
 import { Settings } from './Settings.js';
 
@@ -270,5 +271,70 @@ describe('About section', () => {
     fireEvent.click(button);
     const text = (await screen.findByLabelText('Diagnostics text')) as HTMLTextAreaElement;
     expect(JSON.parse(text.value).config.data_dir).toBe('/data/ontheshoulder');
+  });
+});
+
+describe('Habits and prompts: days and answers', () => {
+  it('shows the days as seven toggles and the two labels, and saves edits to both', async () => {
+    const api = stubApi({ ...ROUTES, '/habits': HABITS });
+    renderApp(<Settings />);
+    fireEvent.click(toggle('Habits and prompts'));
+    const alcohol = await screen.findByRole('form', { name: 'Habit Last night' });
+    const days = within(alcohol).getByRole('group', { name: 'Days asked' });
+    const pressed = () =>
+      within(days)
+        .getAllByRole('button')
+        .map((b) => `${b.getAttribute('aria-label')}:${b.getAttribute('aria-pressed')}`);
+    expect(pressed()).toEqual([
+      'Monday:false',
+      'Tuesday:true',
+      'Wednesday:true',
+      'Thursday:true',
+      'Friday:true',
+      'Saturday:false',
+      'Sunday:false',
+    ]);
+    const yes = within(alcohol).getByLabelText('First answer, saved as yes') as HTMLInputElement;
+    const no = within(alcohol).getByLabelText('Second answer, saved as no') as HTMLInputElement;
+    expect([yes.value, no.value]).toEqual(['Alcohol-free', 'Had a drink']);
+
+    fireEvent.click(within(days).getByRole('button', { name: 'Friday' }));
+    fireEvent.change(no, { target: { value: 'Drank' } });
+    fireEvent.click(within(alcohol).getByRole('button', { name: 'Save Last night' }));
+    await waitFor(() => expect(api.writes()).toHaveLength(1));
+    expect(api.writes()[0]).toMatchObject({
+      method: 'PATCH',
+      path: '/habits/2',
+      body: { weekdays: [2, 3, 4], answer_labels: ['Alcohol-free', 'Drank'] },
+    });
+  });
+
+  it('a habit asked every day shows all seven on and saves as every day, with no labels', async () => {
+    const api = stubApi({ ...ROUTES, '/habits': HABITS });
+    renderApp(<Settings />);
+    fireEvent.click(toggle('Habits and prompts'));
+    const protein = await screen.findByRole('form', { name: 'Habit Protein shake' });
+    const days = within(protein).getByRole('group', { name: 'Days asked' });
+    expect(
+      within(days)
+        .getAllByRole('button')
+        .every((b) => b.getAttribute('aria-pressed') === 'true'),
+    ).toBe(true);
+
+    // One answer on its own cannot be saved.
+    const yes = within(protein).getByLabelText('First answer, saved as yes');
+    fireEvent.change(yes, { target: { value: 'Had it' } });
+    const save = within(protein).getByRole('button', { name: 'Save Protein shake' });
+    expect((save as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(yes, { target: { value: '' } });
+
+    fireEvent.click(within(days).getByRole('button', { name: 'Sunday' }));
+    fireEvent.click(within(days).getByRole('button', { name: 'Sunday' }));
+    fireEvent.click(save);
+    await waitFor(() => expect(api.writes()).toHaveLength(1));
+    expect(api.writes()[0]).toMatchObject({
+      path: '/habits/4',
+      body: { weekdays: null, answer_labels: null },
+    });
   });
 });

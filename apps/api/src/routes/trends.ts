@@ -15,6 +15,7 @@ import {
   body_metric,
   daily_checkin,
   exercise,
+  habit_definition,
   programme_slot,
   set_log,
   strength_session,
@@ -58,6 +59,7 @@ export const trendRoutes: FastifyPluginAsyncTypebox = async (app) => {
         energy: daily_checkin.energy,
         weight_kg: daily_checkin.weight_kg,
         ankle_score: daily_checkin.ankle_score,
+        habits: daily_checkin.habits,
       })
       .from(daily_checkin)
       .where(and(gte(daily_checkin.date, from), lte(daily_checkin.date, to)))
@@ -96,10 +98,19 @@ export const trendRoutes: FastifyPluginAsyncTypebox = async (app) => {
         )
         .all();
 
+      const answerHabits = db
+        .select()
+        .from(habit_definition)
+        .where(eq(habit_definition.enabled, true))
+        .all()
+        .filter((h) => h.answer_labels !== null)
+        .map((h) => ({ key: h.key, weekdays: h.weekdays }));
+
       return weeklyTrends(weeks, {
         activities: activitiesBetween(from, to),
         checkins: checkinsBetween(from, to),
         lifts,
+        answerHabits,
         compliance: (isoWeek) => {
           const c = weekCompliance(db, isoWeek);
           return {

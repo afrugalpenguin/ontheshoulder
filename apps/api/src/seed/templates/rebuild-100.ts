@@ -14,8 +14,16 @@ export const rebuild100: StarterTemplateData = {
   habits: [
     // Off: finishing a walk already counts as the treadmill morning.
     { key: 'treadmill_done', label: 'Treadmill done', enabled: false },
-    { key: 'alcohol_free', label: 'Alcohol free' },
-    { key: 'prehab_done', label: 'Prehab done' },
+    // A quiet record of weeknights: asked Tuesday to Friday mornings about the
+    // night before, so Friday, Saturday and Sunday nights are never asked about.
+    {
+      key: 'alcohol_free',
+      label: 'Last night',
+      answer_labels: ['Alcohol-free', 'Had a drink'],
+      weekdays: [2, 3, 4, 5],
+    },
+    // Off: prehab is a session card on its days, with its own Done.
+    { key: 'prehab_done', label: 'Prehab done', enabled: false },
     {
       key: 'protein_shake',
       label: 'Protein shake',
@@ -185,7 +193,7 @@ export const rebuild100: StarterTemplateData = {
       name: 'Treadmill walk',
       default_duration_min: 50,
       structure: { duration_min: 50 },
-      notes: 'No vest. Prehab first.',
+      notes: 'No vest. After prehab.',
       tags: ['treadmill'],
     },
     {
@@ -238,17 +246,37 @@ export const rebuild100: StarterTemplateData = {
       default_duration_min: 35,
       programme_day: 'Strength B',
     },
+    // The routine is data so it can be edited later; docs/PLAN.md has the same table.
+    {
+      key: 'prehab',
+      kind: 'prehab',
+      name: 'Prehab',
+      default_duration_min: 8,
+      structure: {
+        duration_min: 8,
+        exercises: [
+          { name: 'Single-leg balance, eyes open then closed', dose: '30 s each, both legs' },
+          { name: 'Slow calf raises off a step, two up one down', dose: '3 x 12 each leg' },
+          { name: 'Edge walking, outside then inside edges', dose: '20 m each' },
+          { name: 'Toe spreads and towel scrunches', dose: '2 min' },
+          { name: 'Ankle circles and alphabet', dose: '1 min each' },
+        ],
+      },
+      notes: 'Before the treadmill session. Not a key session.',
+    },
   ],
 
   // Weekday 1 is Monday. Saturday is empty on purpose.
   fixtures: [
     { weekday: 1, slot: 'am', template: 'vest_walk' },
     { weekday: 1, slot: 'pm', template: 'long_ride' },
+    { weekday: 2, slot: 'am', template: 'prehab' },
     { weekday: 2, slot: 'am', template: 'midweek_run' },
     { weekday: 3, slot: 'am', template: 'vest_walk' },
     { weekday: 3, slot: 'pm', template: 'strength_a' },
     { weekday: 4, slot: 'am', template: 'vest_walk' },
     { weekday: 4, slot: 'pm', template: 'swim' },
+    { weekday: 5, slot: 'am', template: 'prehab' },
     { weekday: 5, slot: 'am', template: 'treadmill_walk' },
     { weekday: 5, slot: 'pm', template: 'strength_b' },
     { weekday: 7, slot: 'am', template: 'long_run' },

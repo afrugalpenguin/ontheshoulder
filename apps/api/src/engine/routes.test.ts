@@ -29,8 +29,8 @@ describe('POST /weeks/:isoWeek/generate', () => {
   it('generates the first week of the block from the starter template', async () => {
     const res = await t.call<GeneratedWeek>('POST', '/weeks/2031-W02/generate');
     expect(res.status).toBe(200);
-    expect(res.body.changes).toEqual({ created: 10, updated: 0, kept: 0, removed: 0 });
-    expect(res.body.week.sessions).toHaveLength(10);
+    expect(res.body.changes).toEqual({ created: 12, updated: 0, kept: 0, removed: 0 });
+    expect(res.body.week.sessions).toHaveLength(12);
     expect(res.body.week.generated_at).toMatch(/^\d{4}-/);
     expect(res.body.week.reasoning).toEqual([
       'Midweek run: 8 x 120s run / 60s walk, the starting point.',
@@ -43,7 +43,7 @@ describe('POST /weeks/:isoWeek/generate', () => {
 
   it('is idempotent while nothing has been touched', async () => {
     const res = await t.call<GeneratedWeek>('POST', '/weeks/2031-W02/generate');
-    expect(res.body.changes).toEqual({ created: 0, updated: 10, kept: 0, removed: 0 });
+    expect(res.body.changes).toEqual({ created: 0, updated: 12, kept: 0, removed: 0 });
   });
 
   it('progresses the next week from this week, done or not', async () => {
@@ -73,7 +73,7 @@ describe('POST /weeks/:isoWeek/generate', () => {
     expect(patched.body.edited_by_user).toBe(true);
 
     const res = await t.call<GeneratedWeek>('POST', '/weeks/2031-W02/generate?force=true');
-    expect(res.body.changes).toEqual({ created: 0, updated: 9, kept: 1, removed: 0 });
+    expect(res.body.changes).toEqual({ created: 0, updated: 11, kept: 1, removed: 0 });
     expect(find(res.body.week, 'midweek_run').targets.repeats).toBe(6);
     expect(res.body.week.reasoning).toContain('Midweek run on 2031-01-07: kept your edit.');
   });
@@ -94,7 +94,7 @@ describe('POST /weeks/:isoWeek/generate', () => {
 
     const forced = await t.call<GeneratedWeek>('POST', '/weeks/2031-W02/generate?force=true');
     expect(forced.status).toBe(200);
-    expect(forced.body.changes).toEqual({ created: 0, updated: 8, kept: 2, removed: 0 });
+    expect(forced.body.changes).toEqual({ created: 0, updated: 10, kept: 2, removed: 0 });
     const kept = find(forced.body.week, 'vest_walk');
     expect(kept).toMatchObject({ status: 'done', linked_activity_id: activity.body.id });
     expect(forced.body.week.reasoning).toContain(
@@ -107,7 +107,7 @@ describe('POST /weeks/:isoWeek/generate', () => {
     expect(res.body.week.reasoning[0]).toBe(
       'No block covers this week: fixtures only, no progression.',
     );
-    expect(res.body.week.sessions).toHaveLength(10);
+    expect(res.body.week.sessions).toHaveLength(12);
     expect(res.body.week.sessions.some((s) => s.optional)).toBe(false);
   });
 
@@ -221,7 +221,7 @@ describe('scheduled generation', () => {
     await fresh.call('POST', '/setup/apply-template/rebuild-100', { start_date: '2031-01-06' });
     expect(runScheduledGeneration(db, log, new Date(2031, 0, 12, 20, 0))).toBeNull();
     expect(runScheduledGeneration(db, log, sundayNight)).toBe('2031-W03');
-    expect((await fresh.call<Week>('GET', '/weeks/2031-W03')).body.sessions).toHaveLength(10);
+    expect((await fresh.call<Week>('GET', '/weeks/2031-W03')).body.sessions).toHaveLength(12);
 
     // A restart later the same evening finds the marker and does not run again.
     expect(runScheduledGeneration(db, log, new Date(2031, 0, 12, 22, 0))).toBeNull();

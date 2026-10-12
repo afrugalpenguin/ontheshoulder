@@ -82,6 +82,18 @@ export function SessionCard({ session }: { session: WeekSession }) {
         </div>
       </header>
 
+      {/* A routine on the template is always in view: what to do and how much. */}
+      {template.structure?.exercises && (
+        <ul className="plain routine" aria-label={`${template.name} exercises`}>
+          {template.structure.exercises.map((exercise) => (
+            <li key={exercise.name}>
+              <span className="grow">{exercise.name}</span>
+              <span className="muted">{exercise.dose}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {pending && (
         <div className="row actions">
           {action === 'start' && (

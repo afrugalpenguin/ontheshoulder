@@ -32,17 +32,19 @@ import {
   useProgrammeDays,
   useTemplates,
 } from '../queries.js';
-import { Button } from '../ui/index.js';
+import { Button, Chip } from '../ui/index.js';
 
 /** Save button with its saved and failed states, shared by every section. */
 function SaveRow(props: {
   mutation: { isPending: boolean; isSuccess: boolean; isError: boolean; error: unknown };
   label?: string;
+  /** True while what is in the form cannot be saved as it stands. */
+  disabled?: boolean;
 }) {
-  const { mutation, label = 'Save' } = props;
+  const { mutation, label = 'Save', disabled = false } = props;
   return (
     <div className="row">
-      <Button type="submit" variant="primary" disabled={mutation.isPending}>
+      <Button type="submit" variant="primary" disabled={mutation.isPending || disabled}>
         {label}
       </Button>
       {mutation.isSuccess && (
@@ -416,6 +418,8 @@ function FixturesSection(props: { fixtures: Fixture[]; templates: SessionTemplat
   );
 }
 
+const ALL_WEEKDAYS = [1, 2, 3, 4, 5, 6, 7];
+
 function HabitRow({ habit }: { habit: Habit }) {
   const client = useQueryClient();
   const [form, setForm] = useState({
@@ -423,7 +427,15 @@ function HabitRow({ habit }: { habit: Habit }) {
     prompt_text: habit.prompt_text ?? '',
     prompt_until: habit.prompt_until ?? '',
     enabled: habit.enabled,
+    // No days chosen is stored as null: asked every day.
+    weekdays: habit.weekdays ?? ALL_WEEKDAYS,
+    answer_yes: habit.answer_labels?.[0] ?? '',
+    answer_no: habit.answer_labels?.[1] ?? '',
   });
+  const everyDay = form.weekdays.length === 7;
+  const labels = [form.answer_yes.trim(), form.answer_no.trim()] as const;
+  // Two answers or none: one filled in on its own cannot be saved.
+  const halfLabelled = (labels[0] === '') !== (labels[1] === '');
   const save = useMutation({
     mutationFn: () =>
       api('PATCH', `/habits/${habit.id}`, {
@@ -431,6 +443,8 @@ function HabitRow({ habit }: { habit: Habit }) {
         prompt_text: form.prompt_text.trim() || null,
         prompt_until: form.prompt_until || null,
         enabled: form.enabled,
+        weekdays: everyDay ? null : [...form.weekdays].sort((a, b) => a - b),
+        answer_labels: labels[0] && labels[1] ? [labels[0], labels[1]] : null,
       }),
     onSuccess: () => client.invalidateQueries({ queryKey: keys.habits }),
   });
@@ -463,6 +477,56 @@ function HabitRow({ habit }: { habit: Habit }) {
           onChange={(e) => setForm({ ...form, prompt_until: e.target.value })}
         />
       </label>
+      <div className="stack" role="group" aria-label="Days asked">
+        <span className="score-label">Days asked</span>
+        <div className="weekday-toggles">
+          {WEEKDAYS.map((name, index) => {
+            const weekday = index + 1;
+            const on = form.weekdays.includes(weekday);
+            return (
+              <Chip
+                key={name}
+                selected={on}
+                aria-label={name}
+                // The last day cannot be switched off: a habit asked on no day is switched off with Enabled.
+                disabled={on && form.weekdays.length === 1}
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    weekdays: on
+                      ? form.weekdays.filter((d) => d !== weekday)
+                      : [...form.weekdays, weekday],
+                  })
+                }
+              >
+                {name.slice(0, 2)}
+              </Chip>
+            );
+          })}
+        </div>
+      </div>
+      <fieldset className="stack">
+        <legend>Two answers instead of a tick (leave both empty for a tick)</legend>
+        <label>
+          First answer, saved as yes
+          <input
+            placeholder="none"
+            value={form.answer_yes}
+            onChange={(e) => setForm({ ...form, answer_yes: e.target.value })}
+          />
+        </label>
+        <label>
+          Second answer, saved as no
+          <input
+            placeholder="none"
+            value={form.answer_no}
+            onChange={(e) => setForm({ ...form, answer_no: e.target.value })}
+          />
+        </label>
+        {halfLabelled && (
+          <p className="muted small">Fill in both answers, or neither for a plain tick.</p>
+        )}
+      </fieldset>
       <label className="check">
         <input
           type="checkbox"
@@ -471,7 +535,7 @@ function HabitRow({ habit }: { habit: Habit }) {
         />
         Enabled
       </label>
-      <SaveRow mutation={save} label={`Save ${habit.label}`} />
+      <SaveRow mutation={save} label={`Save ${habit.label}`} disabled={halfLabelled} />
     </form>
   );
 }

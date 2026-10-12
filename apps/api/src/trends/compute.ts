@@ -3,6 +3,7 @@ import {
   daysBetween,
   isoWeekOf,
   isoWeekStart,
+  weekdayOf,
   type SessionKind,
   type TrendDay,
   type TrendWeek,
@@ -26,6 +27,13 @@ export interface CheckinRow {
   energy: number | null;
   weight_kg: number | null;
   ankle_score: number | null;
+  habits?: Record<string, boolean> | null;
+}
+
+/** A two-answer habit: its key and the ISO weekdays it is asked on (null is every day). */
+export interface AnswerHabit {
+  key: string;
+  weekdays: number[] | null;
 }
 
 /** One logged set of a main lift (a slot on the linear rule), with the day it was done. */
@@ -74,6 +82,8 @@ export function weeklyTrends(
     checkins: CheckinRow[];
     lifts: LiftRow[];
     compliance: (isoWeek: string) => WeekCompliance;
+    /** Two-answer habits to count answers for. None when left out. */
+    answerHabits?: AnswerHabit[];
   },
 ): TrendWeek[] {
   return weeks.map((iso_week) => {
@@ -100,6 +110,23 @@ export function weeklyTrends(
       lifts[set.exercise] = Math.max(lifts[set.exercise] ?? 0, set.load_kg);
     }
 
+    // Answers are counted only on the days the habit is asked, so a stray value
+    // saved on another day never shows up. No answer is not a "no".
+    const monday = isoWeekStart(iso_week);
+    const weekDates = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+    const habit_answers: TrendWeek['habit_answers'] = {};
+    for (const habit of input.answerHabits ?? []) {
+      const dates = weekDates.filter((d) => habit.weekdays?.includes(weekdayOf(d)) ?? true);
+      const answers = inWeek(input.checkins)
+        .filter((c) => dates.includes(c.date))
+        .map((c) => c.habits?.[habit.key]);
+      habit_answers[habit.key] = {
+        dates,
+        yes: answers.filter((a) => a === true).length,
+        no: answers.filter((a) => a === false).length,
+      };
+    }
+
     return {
       iso_week,
       start_date: isoWeekStart(iso_week),
@@ -110,6 +137,7 @@ export function weeklyTrends(
       ankle_mean: ankle === null ? null : round(ankle, 2),
       run_rpe_mean: runRpe === null ? null : round(runRpe, 2),
       lifts,
+      habit_answers,
     };
   });
 }
