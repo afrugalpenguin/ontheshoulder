@@ -59,7 +59,7 @@ The ladder starts from its week 1 the week you switch to it. Two fixed run-walk 
 | Toe spreads and towel scrunches | 2 min |
 | Ankle circles and alphabet | 1 min each |
 
-Logged as a habit tick, not a session.
+Prehab is a session in the app, on Tuesday and Friday mornings above the treadmill session. Its card lists these five exercises with their doses, always in view, and has one Done button. It is not a key session and does not count towards a complete week or as a treadmill morning. The list is data on the session template, so it can be changed.
 
 ## Strength
 

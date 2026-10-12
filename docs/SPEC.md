@@ -70,12 +70,16 @@ Canonical names. Use them in code, routes and UI.
   - kettlebells: array of kg values
   - Derived: `achievableLoads(equipmentType)` returns the sorted list of loads that can actually be made. Barbell loads are bar plus symmetric plate combinations. Dumbbell and kettlebell loads are the owned values. Strength suggestions only ever return values from this list.
 - **Fixture**: weekday, slot (am, pm), template_id. The repeating shape of the week.
-- **HabitDefinition**: key, label, prompt_text (nullable), prompt_until (time of day, nullable), enabled. Seeded with: treadmill_done, alcohol_free, prehab_done, protein_shake (prompt_text "Oi. Protein.", prompt_until 12:00). Labels and prompts are editable.
+- **HabitDefinition**: key, label, prompt_text (nullable), prompt_until (time of day, nullable), enabled, weekdays (nullable), answer_labels (nullable). Labels, prompts, days and answers are editable.
+  - `weekdays` is a JSON array of ISO weekdays, 1 Monday to 7 Sunday; null means every day. The check-in shows a habit only on its days, and so does its prompt. The api accepts unique whole numbers from 1 to 7 and refuses an empty list.
+  - `answer_labels` is a JSON pair `[yes, no]`. A habit with labels is two buttons instead of a tick and saves `true` for the first answer and `false` for the second; nothing saved means not answered. A habit without labels is a tick.
+  - Seeded with: protein_shake (prompt_text "Oi. Protein.", prompt_until 12:00, every day); alcohol_free (label "Last night", answers "Alcohol-free" and "Had a drink", asked Tuesday to Friday mornings about the night before, so Friday, Saturday and Sunday nights are never asked about); kit_ready (the evening line about tomorrow); and two that are kept for their history but switched off: treadmill_done (finishing a walk is the treadmill morning) and prehab_done (prehab is a session, 5.2).
+  - Alcohol is a quiet record. It is never part of "week complete", never a streak, never a prompt or banner.
 
 ### 5.2 Plan
 
 - **Block**: name, start_date, end_date, purpose (rebuild, base, build, peak, taper, recovery), progression_rules (JSON, see 6.3), ends_at_event_id (nullable). A block may end at an event instead of a date, so "to the 50k" moves if the event does. Blocks tile the calendar to the A event.
-- **SessionTemplate**: kind (run, walk_vest, walk, ride, swim, strength, prehab, mobility, rest), name, default_duration_min, structure (JSON, 5.5), programme_day_id (strength only), notes, tags.
+- **SessionTemplate**: kind (run, walk_vest, walk, ride, swim, strength, prehab, mobility, rest), name, default_duration_min, structure (JSON, 5.5), programme_day_id (strength only), notes, tags. A prehab session is not a key session: it is left out of compliance and never counts as a treadmill morning. Within a day and slot it is listed first.
 - **WeekPlan**: per ISO week, generated from fixtures and rules. Holds **PlannedSession** rows.
 - **PlannedSession**: date, template_id, slot, targets (duration_min, run_block_sec, walk_block_sec, repeats, vest_kg, distance_km), status (planned, done, skipped, modified), skip_reason (tired, sleep, family, injury, time, other), edited_by_user, linked_activity_id, optional (bool, true for Sunday sessions by default).
 
@@ -106,6 +110,8 @@ Run and walk templates describe themselves so the log form can pre-fill:
 ```
 
 Continuous runs omit repeats and run_sec. Vest walks: `{ "vest_kg": 20 }`. Strength templates reference a programme_day_id instead.
+
+A template can carry a routine, shown on its card in full with nothing to expand: `{ "duration_min": 8, "exercises": [{ "name": "Slow calf raises", "dose": "3 x 12 each leg" }] }`. The starter's prehab template uses it.
 
 ## 6. Plan engine
 
@@ -148,8 +154,8 @@ If no Athlete row exists, the app shows setup: name, A event (name, date, distan
 There is no Today tab: Week (8.5) is home and today's row is open. An open day shows, in this order:
 
 - Prompts strip (today only): any enabled habit with `prompt_text` whose `prompt_until` has not passed and whose tick is not set shows as a single-line banner with a Done button and a "not today" dismiss. Protein shake is the seeded one. It is a nag and stays first.
-- Session cards in slot order. Each has one primary button that depends on the kind: Start for strength (opens the session screen), Log for a run, ride or swim (a short form pre-filled from the plan), Done for everything else. A walk or vest walk is Done in one tap, which logs the planned duration and the planned vest weight with no form; a smaller Start timer button beside it opens the timer. The overflow holds Skip (reason list) and "Log different time" (the log form). Sunday cards show an "optional" tag. The buttons work on any day, so an earlier day's session can be done, logged or skipped late.
-- Check-in card last (today only): weight, then one chip per enabled habit, and on Sundays a "got up for it" chip. Every tap saves; there is no Save. Once a weight is saved for the day the card folds to one line that says what is recorded ("77.0 kg · protein shake"); a tap opens it again. Sleep, energy and the ankle score are no longer asked for: the columns, any saved values and the api fields stay.
+- Session cards in slot order, prehab first within its slot. Each has one primary button that depends on the kind: Start for strength (opens the session screen), Log for a run, ride or swim (a short form pre-filled from the plan), Done for everything else. A walk or vest walk is Done in one tap, which logs the planned duration and the planned vest weight with no form; a smaller Start timer button beside it opens the timer. The overflow holds Skip (reason list) and "Log different time" (the log form). Sunday cards show an "optional" tag. The buttons work on any day, so an earlier day's session can be done, logged or skipped late.
+- Check-in card last (today only): weight, one chip per tick habit asked today, a two-button choice for each two-answer habit asked today, and on Sundays a "got up for it" chip. Only enabled habits whose weekdays include today are shown, so Monday is weight and protein, and Tuesday adds "Last night". The two answers look the same until one is chosen and the chosen one takes the plain selected style: no warning or success colour, no tick or cross. Every tap saves; there is no Save. Once a weight is saved and every two-answer habit asked today has its answer, the card folds to one line that says what is recorded ("77.0 kg · alcohol-free · protein shake"); a tap opens it again. Sleep, energy and the ankle score are no longer asked for: the columns, any saved values and the api fields stay.
 - Garmin strip only if the sidecar is configured; otherwise absent.
 
 ### 8.3 Timer
@@ -184,6 +190,7 @@ Home. One layout at every width: a single centred column about 480px wide, the p
 - Compliance grid per week, Sunday shown as a separate dot. A week with nothing planned, such as one before the first planned week, is an empty cell
 - Main lift working weights over time (squat, deadlift)
 - A weekly review card with templated sentences comparing this week to last
+- Weeknights: one plain text line per week under the review, "AF weeknights: 3 of 4", counting the "Alcohol-free" answers out of the four mornings asked. A morning with no answer is not recorded, not a drink: "3 of 4, 1 not recorded". A morning still to come is not mentioned. No chart, no colour, no target, and nothing before the first week with an answer
 
 There is no sleep and energy chart: the check-in stopped asking for them (8.2). Run RPE was only drawn there, so it is no longer charted; it is still stored and still in the weekly review.
 

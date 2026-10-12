@@ -95,6 +95,20 @@ Start-ScheduledTask -TaskPath '\OnTheShoulder\' -TaskName 'OnTheShoulder Api'
 
 Database migrations run by themselves when the api starts. A backup is taken on every start, so there is always one from just before an update took effect.
 
+### Picking up what is new in the starter template
+
+A migration changes settings an install already has. It does not add new sessions to your week: that is the starter template's job, and it is only applied when you ask. After an update that adds something to the template (v1.2 added the prehab session on Tuesday and Friday mornings), apply it again with the api running:
+
+```
+Invoke-RestMethod -Method Post http://localhost:3001/api/setup/apply-template/rebuild-100
+```
+
+or, on Linux, `curl -X POST http://localhost:3001/api/setup/apply-template/rebuild-100`.
+
+The answer lists what was created; for v1.2 that is one session template and two fixtures. Everything is matched by name first, so nothing you have edited is overwritten, applying twice adds nothing the second time, and on an install that already has a week only the new sessions are put on their days: a session you took off your week is not put back.
+
+Then open Week, Plan, "Regenerate this week" so the current week picks the new sessions up. Sessions already done, skipped or edited are kept. Weeks generated from then on have them by themselves.
+
 ### Settings you can change without touching code
 
 - Settings, Blocks and rules: the progression rules of each block as JSON. It checks them as you type, shows what changed against the saved version, and "Dry run next week" shows the week they would produce without saving anything.
