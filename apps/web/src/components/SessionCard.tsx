@@ -8,7 +8,7 @@ import {
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, errorText } from '../api.js';
-import { buildActivity, logDefaults, primaryAction } from '../lib/activity.js';
+import { buildActivity, hasTimer, logDefaults, primaryAction } from '../lib/activity.js';
 import { KIND_BADGE, KIND_LABEL, STATUS_LABEL, targetText } from '../lib/format.js';
 import { useRefreshWeek } from '../queries.js';
 import { unlockAudio } from '../timer/cues.js';
@@ -17,9 +17,8 @@ import { LogForm } from './LogForm.js';
 
 type Open = 'none' | 'more' | 'log' | 'skip';
 
-/** Where Start goes: the timer for a walk, the session screen for strength. */
+/** Where Start goes for strength: the session screen for its programme day. */
 function startTarget(session: WeekSession): string {
-  if (session.template.kind !== 'strength') return `/timer/${session.id}`;
   return session.template.programme_day_id
     ? `/strength/day/${session.template.programme_day_id}`
     : '/strength';
@@ -27,7 +26,10 @@ function startTarget(session: WeekSession): string {
 
 /**
  * A planned session. One primary button, whose label depends on the kind of
- * session (Start, Log or Done), and a small overflow for Skip and Edit.
+ * session (Start, Log or Done), and a small overflow for Skip and for logging
+ * something other than the plan. A walk is Done in one tap, logged as planned,
+ * with a smaller Start timer beside it. The buttons work on any day, so an
+ * earlier day's session can be ticked late.
  */
 export function SessionCard({ session }: { session: WeekSession }) {
   const [open, setOpen] = useState<Open>('none');
@@ -88,7 +90,7 @@ export function SessionCard({ session }: { session: WeekSession }) {
               className="grow"
               to={startTarget(session)}
               state={{ autostart: true }}
-              // The tap that starts the timer is the one that lets it play its cues.
+              // The tap that starts the session is the one that lets the rest timer play its cues.
               onClick={unlockAudio}
             >
               Start
@@ -109,6 +111,16 @@ export function SessionCard({ session }: { session: WeekSession }) {
               Done
             </Button>
           )}
+          {hasTimer(template.kind) && (
+            <ButtonLink
+              to={`/timer/${session.id}`}
+              state={{ autostart: true }}
+              // The tap that starts the timer is the one that lets it play its cues.
+              onClick={unlockAudio}
+            >
+              Start timer
+            </ButtonLink>
+          )}
           <Button
             variant="ghost"
             className="more"
@@ -126,7 +138,7 @@ export function SessionCard({ session }: { session: WeekSession }) {
             Skip
           </Button>
           <Button className="grow" onClick={() => setOpen('log')}>
-            Edit
+            {action === 'log' ? 'Edit' : 'Log different time'}
           </Button>
         </div>
       )}

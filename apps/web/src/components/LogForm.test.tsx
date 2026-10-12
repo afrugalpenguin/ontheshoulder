@@ -2,7 +2,7 @@ import type { ActivityInput, WeekSession } from '@ots/shared';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { primaryAction } from '../lib/activity.js';
+import { hasTimer, primaryAction } from '../lib/activity.js';
 import { session } from '../test/fixtures.js';
 import { LogForm } from './LogForm.js';
 
@@ -139,8 +139,8 @@ describe('LogForm', () => {
 
 describe('primaryAction', () => {
   it.each([
-    ['walk_vest', 'start'],
-    ['walk', 'start'],
+    ['walk_vest', 'done'],
+    ['walk', 'done'],
     ['strength', 'start'],
     ['run', 'log'],
     ['ride', 'log'],
@@ -150,5 +150,12 @@ describe('primaryAction', () => {
     ['rest', 'done'],
   ] as const)('%s sessions get %s', (kind, action) => {
     expect(primaryAction(kind)).toBe(action);
+  });
+
+  it('only walks get the second, smaller Start timer button', () => {
+    expect(hasTimer('walk_vest')).toBe(true);
+    expect(hasTimer('walk')).toBe(true);
+    expect(hasTimer('strength')).toBe(false);
+    expect(hasTimer('run')).toBe(false);
   });
 });

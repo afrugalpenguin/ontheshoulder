@@ -16,11 +16,13 @@ export interface LogFormState {
 /** What the primary button on a session card does. */
 export type PrimaryAction = 'start' | 'log' | 'done';
 
-/** Timed and set-by-set sessions start, watch-recorded ones are logged after, the rest are ticked. */
+/**
+ * Set-by-set sessions start, watch-recorded ones are logged after, the rest are
+ * ticked. A walk is ticked too: it is usually done without the app open, so one
+ * tap logs it as planned.
+ */
 export function primaryAction(kind: SessionKind): PrimaryAction {
   switch (kind) {
-    case 'walk_vest':
-    case 'walk':
     case 'strength':
       return 'start';
     case 'run':
@@ -31,6 +33,9 @@ export function primaryAction(kind: SessionKind): PrimaryAction {
       return 'done';
   }
 }
+
+/** Walks can also be timed: their card has a smaller Start timer beside Done. */
+export const hasTimer = (kind: SessionKind): boolean => kind === 'walk' || kind === 'walk_vest';
 
 /** Planned minutes for a session, when the plan gives any. */
 export function plannedMinutes(session: Pick<WeekSession, 'targets' | 'template'>): number | null {

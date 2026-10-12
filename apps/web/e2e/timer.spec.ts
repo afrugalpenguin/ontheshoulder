@@ -32,8 +32,8 @@ test('vest walk: 60 minutes with a 10 minute gap, half-way cue state, saved acti
   await page.goto('/');
   const wednesday = page.getByRole('region', { name: 'Wednesday 8 Jan' });
   const walk = wednesday.getByRole('article', { name: 'Vest walk' });
-  // Start on the card is the only Start: the timer is already running when it opens.
-  await walk.getByRole('link', { name: 'Start' }).click();
+  // Start timer on the card is the only Start: the timer is already running when it opens.
+  await walk.getByRole('link', { name: 'Start timer' }).click();
   await expect(page.getByRole('heading', { name: 'Vest walk' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Main' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
