@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { session } from '../test/fixtures.js';
 import { createTimer, endEarly, start, summary, tick } from './machine.js';
-import { finishPayload, timerPlanFor } from './plan.js';
+import { SHORT_FINISH_SEC, finishPayload, isShortFinish, timerPlanFor } from './plan.js';
 
 const MIN = 60_000;
 
@@ -54,6 +54,33 @@ describe('timerPlanFor', () => {
     );
     expect(timerPlanFor(walk).duration_min).toBe(50);
     expect(timerPlanFor(session('swim', 'Coached swim', {})).duration_min).toBeNull();
+  });
+});
+
+describe('a short finish', () => {
+  const ended = (total_sec: number) => ({
+    total_sec,
+    completed: false,
+    ended_early: true,
+    phases: [],
+  });
+
+  it('is anything under the threshold, when the plan has a duration to offer', () => {
+    expect(SHORT_FINISH_SEC).toBe(300);
+    expect(isShortFinish(ended(7), 60)).toBe(true);
+    expect(isShortFinish(ended(299), 60)).toBe(true);
+    expect(isShortFinish(ended(300), 60)).toBe(false);
+    expect(isShortFinish(ended(7), null)).toBe(false);
+  });
+
+  it('logs the planned minutes when they were chosen, keeping what the timer recorded', () => {
+    const walk = session('walk_vest', 'Vest walk', { duration_min: 60, vest_kg: 20 });
+    const payload = finishPayload(walk, ended(7), { rpe: null, notes: '' }, 60);
+    expect(payload).toMatchObject({
+      duration_min: 60,
+      detail: { vest_kg: 20, timer: { total_sec: 7, ended_early: true } },
+    });
+    expect(finishPayload(walk, ended(7), { rpe: null, notes: '' }).duration_min).toBe(0.1);
   });
 });
 

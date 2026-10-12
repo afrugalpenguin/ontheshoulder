@@ -3,16 +3,21 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { api, errorText } from '../api.js';
+import { plannedMinutes } from '../lib/activity.js';
 import { mmss, targetText } from '../lib/format.js';
 import { useRefreshWeek, useWeek } from '../queries.js';
 import { Button, ButtonLink, Card, Segmented, scale, useToast } from '../ui/index.js';
 import { IntervalTimer } from './IntervalTimer.js';
 import type { TimerSummary } from './machine.js';
-import { finishPayload, timerPlanFor } from './plan.js';
+import { finishPayload, isShortFinish, timerPlanFor } from './plan.js';
 
 const RPE = scale(1, 10);
 
-/** The interval timer for one planned session, then one tap to save what was done. */
+/**
+ * The interval timer for one planned session, then one tap to save what was
+ * done. A timer finished after only a few minutes saves nothing until the user
+ * has said whether to log the planned duration or the time on the clock.
+ */
 export function TimerPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
@@ -31,6 +36,8 @@ export function TimerPage() {
     : undefined;
 
   const [done, setDone] = useState<TimerSummary | null>(null);
+  // Which time to log after a short finish; null until chosen.
+  const [logAs, setLogAs] = useState<'planned' | 'actual' | null>(null);
   const [rpe, setRpe] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
   const save = useMutation({
@@ -71,6 +78,30 @@ export function TimerPage() {
     );
   }
 
+  const plannedMin = plannedMinutes(session);
+  if (isShortFinish(done, plannedMin) && logAs === null) {
+    return (
+      <main>
+        <header className="page-head">
+          <h1>{session.template.name}</h1>
+          <p className="muted">The timer ran for {mmss(done.total_sec)}.</p>
+        </header>
+        <Card role="alertdialog" aria-label="Which time to log">
+          <p>Log the planned {plannedMin} min instead?</p>
+          <div className="row">
+            <Button variant="primary" className="grow" onClick={() => setLogAs('planned')}>
+              Log {plannedMin} min
+            </Button>
+            <Button className="grow" onClick={() => setLogAs('actual')}>
+              Log {mmss(done.total_sec)}
+            </Button>
+          </div>
+        </Card>
+      </main>
+    );
+  }
+  const minutes = logAs === 'planned' && plannedMin !== null ? plannedMin : undefined;
+
   return (
     <main>
       <header className="page-head">
@@ -84,13 +115,13 @@ export function TimerPage() {
         aria-label="Log timed session"
         onSubmit={(e) => {
           e.preventDefault();
-          save.mutate(finishPayload(session, done, { rpe, notes }));
+          save.mutate(finishPayload(session, done, { rpe, notes }, minutes));
         }}
       >
         <Card>
           <dl className="pairs">
             <dt>Time</dt>
-            <dd>{mmss(done.total_sec)}</dd>
+            <dd>{minutes === undefined ? mmss(done.total_sec) : `${minutes} min, as planned`}</dd>
             {session.template.kind === 'walk_vest' && (
               <>
                 <dt>Vest</dt>
