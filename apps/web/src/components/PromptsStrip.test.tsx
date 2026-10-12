@@ -59,9 +59,22 @@ describe('prompt timing logic', () => {
         prompt_text: 'Stretch.',
         prompt_until: null,
         enabled: true,
+        weekdays: null,
+        answer_labels: null,
       },
     ];
     expect(keysOf(activePrompts(habits, emptyCheckin(DAY), '23:59'))).toEqual(['stretch']);
+  });
+
+  it('a habit with days only nags on those days', () => {
+    // 2031-01-06 is a Monday. The nag follows the same rule as the check-in.
+    const habits: Habit[] = HABITS.map((h) =>
+      h.key === 'protein_shake' ? { ...h, weekdays: [1, 3] } : h,
+    );
+    const on = (date: string) => keysOf(activePrompts(habits, emptyCheckin(date), '08:00'));
+    expect(on('2031-01-06')).toEqual(['protein_shake']);
+    expect(on('2031-01-07')).toEqual([]);
+    expect(on('2031-01-08')).toEqual(['protein_shake']);
   });
 });
 

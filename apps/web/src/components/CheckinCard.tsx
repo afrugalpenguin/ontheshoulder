@@ -1,7 +1,7 @@
 import { weekdayOf, type Checkin, type CheckinInput, type Habit } from '@ots/shared';
 import { useEffect, useRef, useState } from 'react';
-import { KIT_READY } from '../lib/kit.js';
-import { Button, Card, Chip, Stepper } from '../ui/index.js';
+import { answerLabel, habitsFor, isTwoAnswer } from '../lib/habits.js';
+import { Button, Card, Chip, Segmented, Stepper } from '../ui/index.js';
 
 interface Props {
   checkin: Checkin;
@@ -12,32 +12,45 @@ interface Props {
   onSave: (changes: CheckinInput) => void;
 }
 
-/** How long after the last change to the weight the card folds to one line. */
+/** How long after the last change the card folds to one line. */
 export const COLLAPSE_AFTER_MS = 2500;
 
+const ANSWERS = [
+  { value: 'yes', label: '' },
+  { value: 'no', label: '' },
+] as const;
+
 /**
- * The day's check-in: weight and the habit chips. Once a weight is saved for
- * the day the card folds to one line saying what is recorded; a tap opens it
- * again and it then stays open.
+ * The day's check-in: weight, any two-answer habit asked today, and the habit
+ * chips. Only habits asked on this weekday are shown. Once a weight is saved
+ * and every two-answer habit has its answer, the card folds to one line saying
+ * what is recorded; a tap opens it again and it then stays open.
  */
 export function CheckinCard({ checkin, habits, lastWeight, onSave }: Props) {
   const isSunday = weekdayOf(checkin.date) === 7;
   const weight = checkin.weight_kg;
-  const [open, setOpen] = useState(weight === null);
+  const shown = habitsFor(habits, checkin.date);
+  const choices = shown.filter(isTwoAnswer);
+  const ticks = shown.filter((h) => !isTwoAnswer(h));
+  const answered = choices.filter((h) => checkin.habits[h.key] !== undefined).length;
+  const complete = weight !== null && answered === choices.length;
+
+  const [open, setOpen] = useState(!complete);
   const openedByHand = useRef(false);
 
   // Plus and minus save on every tap, so the fold waits for the taps to stop.
   useEffect(() => {
-    if (weight === null || openedByHand.current) return;
+    if (!complete || openedByHand.current) return;
     const timer = setTimeout(() => setOpen(false), COLLAPSE_AFTER_MS);
     return () => clearTimeout(timer);
-  }, [weight]);
-
-  const shown = habits.filter((h) => h.enabled && h.key !== KIT_READY);
+  }, [complete, weight, answered]);
 
   if (!open && weight !== null) {
-    const ticked = shown.filter((h) => checkin.habits[h.key] === true).map((h) => h.label);
-    if (isSunday && checkin.sunday_got_up === true) ticked.push('Got up for it');
+    const recorded = [
+      ...choices.map((h) => answerLabel(h, checkin)).filter((label) => label !== null),
+      ...ticks.filter((h) => checkin.habits[h.key] === true).map((h) => h.label),
+    ];
+    if (isSunday && checkin.sunday_got_up === true) recorded.push('Got up for it');
     return (
       <section aria-label="Check-in">
         <button
@@ -49,7 +62,7 @@ export function CheckinCard({ checkin, habits, lastWeight, onSave }: Props) {
             setOpen(true);
           }}
         >
-          {[`${weight.toFixed(1)} kg`, ...ticked.map((label) => label.toLowerCase())].join(' · ')}
+          {[`${weight.toFixed(1)} kg`, ...recorded.map((label) => label.toLowerCase())].join(' · ')}
         </button>
       </section>
     );
@@ -74,7 +87,7 @@ export function CheckinCard({ checkin, habits, lastWeight, onSave }: Props) {
           <Button
             onClick={() => {
               onSave({ weight_kg: lastWeight });
-              setOpen(false);
+              if (answered === choices.length) setOpen(false);
             }}
           >
             Same today
@@ -82,7 +95,7 @@ export function CheckinCard({ checkin, habits, lastWeight, onSave }: Props) {
         </div>
       )}
       <div className="chips" role="group" aria-label="Habits">
-        {shown.map((h) => {
+        {ticks.map((h) => {
           const ticked = checkin.habits[h.key] === true;
           return (
             <Chip
@@ -103,6 +116,21 @@ export function CheckinCard({ checkin, habits, lastWeight, onSave }: Props) {
           </Chip>
         )}
       </div>
+      {/* Two plain buttons, the same until one is chosen: a record, not a score. */}
+      {choices.map((h) => {
+        const answer = checkin.habits[h.key];
+        return (
+          <Segmented
+            key={h.key}
+            label={h.label}
+            options={ANSWERS.map((a, i) => ({ ...a, label: h.answer_labels[i] as string }))}
+            value={answer === undefined ? null : answer ? 'yes' : 'no'}
+            onChange={(v) => {
+              if (v !== null) onSave({ habits: { [h.key]: v === 'yes' } });
+            }}
+          />
+        );
+      })}
     </Card>
   );
 }

@@ -10,14 +10,18 @@ export const HABITS: Habit[] = [
     prompt_text: null,
     prompt_until: null,
     enabled: false,
+    weekdays: null,
+    answer_labels: null,
   },
   {
     id: 2,
     key: 'alcohol_free',
-    label: 'Alcohol free',
+    label: 'Last night',
     prompt_text: null,
     prompt_until: null,
     enabled: true,
+    weekdays: [2, 3, 4, 5],
+    answer_labels: ['Alcohol-free', 'Had a drink'],
   },
   {
     id: 3,
@@ -25,7 +29,9 @@ export const HABITS: Habit[] = [
     label: 'Prehab done',
     prompt_text: null,
     prompt_until: null,
-    enabled: true,
+    enabled: false,
+    weekdays: null,
+    answer_labels: null,
   },
   {
     id: 4,
@@ -34,6 +40,8 @@ export const HABITS: Habit[] = [
     prompt_text: 'Oi. Protein.',
     prompt_until: '12:00',
     enabled: true,
+    weekdays: null,
+    answer_labels: null,
   },
   {
     id: 5,
@@ -42,6 +50,8 @@ export const HABITS: Habit[] = [
     prompt_text: 'Tomorrow: {session}. Kit out?',
     prompt_until: null,
     enabled: true,
+    weekdays: null,
+    answer_labels: null,
   },
 ];
 
