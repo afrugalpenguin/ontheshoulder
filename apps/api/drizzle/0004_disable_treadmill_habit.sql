@@ -1,0 +1,1 @@
+update `habit_definition` set `enabled` = false where `key` = 'treadmill_done';

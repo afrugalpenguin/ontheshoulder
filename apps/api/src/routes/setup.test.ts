@@ -159,6 +159,8 @@ describe('starter template', () => {
       'kit_ready',
     ]);
     expect(habits.body[3]).toMatchObject({ prompt_text: 'Oi. Protein.', prompt_until: '12:00' });
+    // Finishing a walk counts as the treadmill morning, so its habit is seeded off.
+    expect(habits.body.filter((h) => !h.enabled).map((h) => h.key)).toEqual(['treadmill_done']);
 
     const fresh = await makeApp();
     await fresh.call('POST', '/setup/apply-template/rebuild-100');
