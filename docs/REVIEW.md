@@ -97,6 +97,8 @@ Written 2026-10-11 after a second unattended run: stages 11 to 15 from `docs/bui
 
 # v1.2
 
+**v1.2 landed 2026-10-12.** #36 and #38 are merged in that order, and the briefs are in `main` (#42). The "Open" lines and items 1 and 5 below are as written before the landing. The phone checks and the three steps on the real install in item 2 are still to do.
+
 Written 2026-10-12 after a third unattended run: stages 16 and 17 from `docs/build/v1.2/`. Each PR lists its acceptance criteria with the output that proves each ticked one, the screenshots asked for, and what was not checked on a phone.
 
 ## Look at these first
