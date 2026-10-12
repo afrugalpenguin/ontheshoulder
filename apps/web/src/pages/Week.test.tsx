@@ -2,7 +2,7 @@ import type { Week as WeekData } from '@ots/shared';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { emptyWeek, renderApp, stubApi } from '../test/api.js';
+import { emptyCompliance, emptyWeek, renderApp, stubApi } from '../test/api.js';
 import { HABITS, session } from '../test/fixtures.js';
 import { Week } from './Week.js';
 
@@ -58,12 +58,18 @@ const toggleOf = (region: HTMLElement) =>
   within(region).getAllByRole('button')[0] as HTMLButtonElement;
 
 describe('Week', () => {
-  it('opens today with its check-in and session cards, and leaves the other days as one line', async () => {
+  it('opens today with its session cards before its check-in, and leaves the other days as one line', async () => {
     open(at(6, 8));
     const monday = await day('Monday 6 Jan');
     expect(toggleOf(monday).getAttribute('aria-expanded')).toBe('true');
-    expect(await within(monday).findByRole('region', { name: 'Check-in' })).toBeTruthy();
-    expect(within(monday).getByRole('article', { name: 'Vest walk' })).toBeTruthy();
+    const checkin = await within(monday).findByRole('region', { name: 'Check-in' });
+    const walk = within(monday).getByRole('article', { name: 'Vest walk' });
+    // The day comes first: sessions above, the check-in last.
+    expect(walk.compareDocumentPosition(checkin) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Weight and habit chips only: nothing asks for sleep, energy or the ankle.
+    expect(within(checkin).getByRole('textbox', { name: 'Weight' })).toBeTruthy();
+    expect(within(checkin).queryByRole('radiogroup')).toBeNull();
+    expect(checkin.textContent).not.toMatch(/Sleep|Energy|Ankle|Treadmill/);
 
     const tuesday = await day('Tuesday 7 Jan');
     expect(toggleOf(tuesday).getAttribute('aria-expanded')).toBe('false');
@@ -91,7 +97,14 @@ describe('Week', () => {
     open(at(6, 8));
     const monday = await day('Monday 6 Jan');
     const walk = await within(monday).findByRole('article', { name: 'Vest walk' });
-    expect(within(walk).getByRole('link', { name: 'Start' }).getAttribute('href')).toBe('/timer/1');
+    // A walk is ticked in one tap, with the timer as the smaller second button.
+    expect(within(walk).getByRole('button', { name: 'Done' })).toBeTruthy();
+    expect(within(walk).getByRole('link', { name: 'Start timer' }).getAttribute('href')).toBe(
+      '/timer/1',
+    );
+    fireEvent.click(within(walk).getByRole('button', { name: 'More for Vest walk' }));
+    expect(within(walk).getByRole('button', { name: 'Skip' })).toBeTruthy();
+    expect(within(walk).getByRole('button', { name: 'Log different time' })).toBeTruthy();
 
     const tuesday = await day('Tuesday 7 Jan');
     fireEvent.click(toggleOf(tuesday));
@@ -104,18 +117,81 @@ describe('Week', () => {
   it('saves the check-in on each tap with no Save button', async () => {
     const api = open(at(6, 8));
     const checkin = await screen.findByRole('region', { name: 'Check-in' });
-    fireEvent.click(within(checkin).getByRole('radio', { name: 'Sleep 4' }));
+    fireEvent.click(within(checkin).getByRole('button', { name: 'Alcohol free' }));
     await waitFor(() =>
       expect(api.writes()).toEqual([
-        { method: 'PUT', path: '/checkins/2031-01-06', body: { sleep_quality: 4 } },
+        { method: 'PUT', path: '/checkins/2031-01-06', body: { habits: { alcohol_free: true } } },
       ]),
     );
     expect(within(checkin).queryByRole('button', { name: /save/i })).toBeNull();
     await waitFor(() =>
       expect(
-        within(checkin).getByRole('radio', { name: 'Sleep 4' }).getAttribute('aria-checked'),
+        within(checkin).getByRole('button', { name: 'Alcohol free' }).getAttribute('aria-pressed'),
       ).toBe('true'),
     );
+  });
+
+  it('the check-in folds to one line once the weight is saved, and a tap opens it again', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(6, 8));
+    const api = stubApi({
+      '/weeks/2031-W02': WEEK,
+      '/habits': HABITS,
+      '/metrics?metric=weight_kg&to=2031-01-06': [{ value: 71.2 }],
+    });
+    renderApp(<Week />);
+    const checkin = await screen.findByRole('region', { name: 'Check-in' });
+    fireEvent.click(within(checkin).getByRole('button', { name: 'Same today' }));
+    await waitFor(() =>
+      expect(api.writes()).toEqual([
+        { method: 'PUT', path: '/checkins/2031-01-06', body: { weight_kg: 71.2 } },
+      ]),
+    );
+
+    const line = await screen.findByRole('button', { name: '71.2 kg' });
+    expect(screen.queryByRole('textbox', { name: 'Weight' })).toBeNull();
+    fireEvent.click(line);
+    expect(await screen.findByRole('textbox', { name: 'Weight' })).toBeTruthy();
+  });
+
+  it('a walk is logged as planned in one tap and one call', async () => {
+    const api = open(at(6, 8));
+    const walk = await screen.findByRole('article', { name: 'Vest walk' });
+    fireEvent.click(within(walk).getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(api.writes()).toHaveLength(1));
+    expect(api.writes()).toEqual([
+      {
+        method: 'POST',
+        path: '/activities',
+        body: {
+          date: '2031-01-06',
+          kind: 'walk_vest',
+          planned_session_id: 1,
+          duration_min: 60,
+          rpe: null,
+          notes: null,
+          detail: { vest_kg: 20 },
+        },
+      },
+    ]);
+  });
+
+  it('an earlier day still to do says so on its chip, opens on a tap and can be ticked late', async () => {
+    const api = open(at(8, 8));
+    const monday = await day('Monday 6 Jan');
+    const chip = await within(monday).findByLabelText('Vest walk: To do');
+    expect(chip.textContent).toBe('Vest walk to do');
+    // Today and later days keep the plain status.
+    expect(within(await day('Sunday 12 Jan')).getByLabelText('Long run: Skipped')).toBeTruthy();
+
+    fireEvent.click(chip);
+    fireEvent.click(within(monday).getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(api.writes()).toHaveLength(1));
+    expect(api.writes()[0]).toMatchObject({
+      method: 'POST',
+      path: '/activities',
+      body: { date: '2031-01-06', planned_session_id: 1, duration_min: 60 },
+    });
   });
 
   it('shows no prompt about tomorrow before 20:00', async () => {
@@ -164,7 +240,10 @@ describe('Week', () => {
     const monday = await day('Monday 13 Jan');
     expect(await within(monday).findByLabelText('Vest walk: Planned')).toBeTruthy();
     expect(toggleOf(monday).getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByRole('heading', { name: /2031-W03/ })).toBeTruthy();
+    // The title is the date range, with the ISO week small under it.
+    const title = screen.getByRole('heading', { level: 1 });
+    expect(title.textContent).toBe('13 to 19 Jan2031-W03');
+    expect(title.querySelector('.sub')?.textContent).toBe('2031-W03');
   });
 
   it('adds the run minutes logged this week to the header line', async () => {
@@ -176,8 +255,8 @@ describe('Week', () => {
       '/trends/weekly?from=2031-01-06&to=2031-01-12': [{ iso_week: '2031-W02', run_minutes: 95 }],
     });
     renderApp(<Week />);
-    const line = await screen.findByLabelText('Week compliance');
-    expect(line.textContent).toBe('So far: 0 of 0 sessions, run 95 min');
+    const line = await screen.findByLabelText('This week so far');
+    expect(line.textContent).toBe('Run 95 min');
   });
 
   it('shows a time-boxed run as a range on its card', async () => {
@@ -196,9 +275,46 @@ describe('Week', () => {
     expect(within(card).getByRole('button', { name: 'Log' })).toBeTruthy();
   });
 
-  it('shows the two streaks in the header', async () => {
+  it('the header leaves out every part with nothing to say yet', async () => {
     open(at(6, 8));
-    const streaks = await screen.findByLabelText('Streaks');
-    await waitFor(() => expect(streaks.textContent).toBe('Weeks in a row0Mornings in a row0'));
+    await screen.findByRole('region', { name: 'Check-in' });
+    const header = document.querySelector('.page-head') as HTMLElement;
+    // Nothing done, no event and no streak: the title and nothing else.
+    expect(header.textContent).toBe('<6 to 12 Jan2031-W02>');
+    expect(screen.queryByLabelText('This week so far')).toBeNull();
+  });
+
+  it('the header line joins compliance, run minutes and streaks', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(at(8, 8));
+    stubApi({
+      '/weeks/2031-W02': {
+        ...WEEK,
+        sessions: WEEK.sessions.map((s) => (s.id === 1 ? { ...s, status: 'done' } : s)),
+      },
+      '/weeks/2031-W02/compliance': {
+        ...emptyCompliance('2031-W02'),
+        required: [
+          { template_key: 'midweek_run', planned: 1, done: 1, met: true },
+          { template_key: 'strength_a', planned: 1, done: 0, met: false },
+        ],
+        treadmill: { days_done: 2, days_needed: 4, met: false },
+        optional_planned: 1,
+      },
+      '/habits': HABITS,
+      '/trends/weekly?from=2031-01-06&to=2031-01-12': [{ iso_week: '2031-W02', run_minutes: 45 }],
+      '/trends/weekly?from=2030-07-08&to=2031-01-08': [
+        { iso_week: '2030-W52', complete: true },
+        { iso_week: '2031-W01', complete: true },
+        { iso_week: '2031-W02', complete: false },
+      ],
+      '/events': [{ id: 1, name: 'Example 100', date: '2031-06-07', priority: 'A' }],
+    });
+    renderApp(<Week />);
+    const line = await screen.findByLabelText('This week so far');
+    expect(line.textContent).toBe(
+      'Key sessions 1 of 2 · mornings 2 of 4 · run 45 min · 2 weeks in a row',
+    );
+    expect(screen.getByText('Example 100 in 21 weeks, 3 days')).toBeTruthy();
   });
 });

@@ -7,11 +7,10 @@ import { CheckinCard } from '../components/CheckinCard.js';
 import { DayRow } from '../components/DayRow.js';
 import { KitBanner } from '../components/KitBanner.js';
 import { PromptsStrip } from '../components/PromptsStrip.js';
-import { WEEKDAYS, complianceText, countdown, pickEvents, shortDate } from '../lib/format.js';
+import { WEEKDAYS, countdown, dateRange, pickEvents, weekLine } from '../lib/format.js';
 import { KIT_READY, kitPrompt } from '../lib/kit.js';
 import { activePrompts } from '../lib/prompts.js';
 import { completeWeekStreak, morningStreak } from '../lib/streaks.js';
-import { DESKTOP, useMediaQuery } from '../lib/useMediaQuery.js';
 import { useNow } from '../lib/useNow.js';
 import {
   generateWeek,
@@ -34,8 +33,8 @@ const MORNING_WEEKS = 4;
 /** A sideways drag at least this long, and flatter than it is long, changes week. */
 const SWIPE_PX = 60;
 
-/** The two small numbers in the header: complete weeks in a row, weekday mornings in a row. */
-function Streaks({ today }: { today: string }) {
+/** Complete weeks in a row and weekday mornings in a row; null until both have loaded. */
+function useStreaks(today: string) {
   const thisWeek = isoWeekOf(today);
   const monday = isoWeekStart(thisWeek);
   const trends = useWeeklyTrends(addDays(monday, -7 * STREAK_WEEKS), today);
@@ -43,38 +42,28 @@ function Streaks({ today }: { today: string }) {
   const recent = useWeeks(
     Array.from({ length: MORNING_WEEKS + 1 }, (_, i) => isoWeekOf(addDays(earliest, 7 * i))),
   );
-  // Drawn with dashes until the numbers arrive, so the header does not jump.
-  const weeks = trends.data ? completeWeekStreak(trends.data, thisWeek) : null;
-  const mornings = recent
-    ? morningStreak(
-        recent.flatMap((w) => w.sessions),
-        today,
-        earliest,
-      )
-    : null;
-  return (
-    <dl className="streaks" aria-label="Streaks">
-      <div>
-        <dt>Weeks in a row</dt>
-        <dd>{weeks ?? '-'}</dd>
-      </div>
-      <div>
-        <dt>Mornings in a row</dt>
-        <dd>
-          {mornings ? mornings.days : '-'}
-          {mornings?.capped && mornings.days > 0 ? '+' : ''}
-        </dd>
-      </div>
-    </dl>
-  );
+  const loaded =
+    trends.data && recent
+      ? {
+          weeks: completeWeekStreak(trends.data, thisWeek),
+          mornings: morningStreak(
+            recent.flatMap((w) => w.sessions),
+            today,
+            earliest,
+          ),
+        }
+      : null;
+  return { loaded, query: trends };
 }
 
-/** Home. The week as seven day rows, today open with its check-in, prompts and sessions. */
+/**
+ * Home. The week as seven day rows, today open with its prompts, its sessions
+ * and then its check-in. One centred column at every width.
+ */
 export function Week() {
   const { today, time } = useNow();
   const params = useParams();
   const navigate = useNavigate();
-  const desktop = useMediaQuery(DESKTOP);
   const thisWeek = isoWeekOf(today);
   const isoWeek = params.isoWeek && isIsoWeek(params.isoWeek) ? params.isoWeek : thisWeek;
   const dates = isoWeekDates(isoWeek);
@@ -87,6 +76,7 @@ export function Week() {
   const tomorrowWeek = useWeek(isoWeekOf(tomorrow));
   const compliance = useCompliance(isoWeek);
   const totals = useWeeklyTrends(monday, dates[6] as string);
+  const streaks = useStreaks(today);
   const events = useEvents();
   const habits = useHabits();
   const checkin = useCheckin(today);
@@ -135,7 +125,7 @@ export function Week() {
   );
 
   const isOpen = (date: string) =>
-    desktop || (toggled[date] ?? (date === today || (date === tomorrow && kitText !== null)));
+    toggled[date] ?? (date === today || (date === tomorrow && kitText !== null));
 
   // Everything the first screen shows arrives before anything is drawn, so the
   // page appears once instead of growing a piece at a time.
@@ -144,6 +134,7 @@ export function Week() {
     tomorrowWeek.data &&
     compliance.data &&
     totals.data &&
+    streaks.loaded &&
     events.data &&
     habits.data &&
     checkin.data &&
@@ -155,6 +146,7 @@ export function Week() {
     tomorrowWeek,
     compliance,
     totals,
+    streaks.query,
     events,
     habits,
     checkin,
@@ -164,8 +156,8 @@ export function Week() {
   // Bring today to the top of the screen once the week has been drawn.
   const todayRow = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (ready && !desktop) todayRow.current?.scrollIntoView?.({ block: 'start' });
-  }, [ready, desktop, isoWeek]);
+    if (ready) todayRow.current?.scrollIntoView?.({ block: 'start' });
+  }, [ready, isoWeek]);
 
   const touch = useRef<{ x: number; y: number } | null>(null);
   const onTouchStart = (e: TouchEvent) => {
@@ -183,8 +175,13 @@ export function Week() {
   };
 
   const { goal } = pickEvents(events.data ?? [], today);
-  const summary = compliance.data ? complianceText(compliance.data) : null;
-  const runMinutes = totals.data?.find((w) => w.iso_week === isoWeek)?.run_minutes;
+  // Streaks are about now, so they only join the line on the current week.
+  const summary = compliance.data
+    ? weekLine(compliance.data, {
+        runMinutes: totals.data?.find((w) => w.iso_week === isoWeek)?.run_minutes,
+        ...(isoWeek === thisWeek ? streaks.loaded : {}),
+      })
+    : null;
   const sessions = week.data?.sessions ?? [];
   const prompts = habits.data && checkin.data ? activePrompts(habits.data, checkin.data, time) : [];
   const failure = [regenerate, generateNext, saveCheckin, saveTomorrow].find(
@@ -193,7 +190,7 @@ export function Week() {
 
   if (!ready) {
     return (
-      <main className="wide">
+      <main className="week">
         {loadError ? (
           <p role="alert" className="error">
             {errorText(loadError.error)}
@@ -206,17 +203,15 @@ export function Week() {
   }
 
   return (
-    <main className="wide">
+    <main className="week">
       <header className="page-head">
         <div className="week-head">
           <Button aria-label="Previous week" onClick={() => navigate(`/week/${previousWeek}`)}>
             <span aria-hidden="true">&lt;</span>
           </Button>
           <h1 className="grow center">
-            {isoWeek}
-            <span className="muted sub">
-              {shortDate(monday)} to {shortDate(dates[6] as string)}
-            </span>
+            {dateRange(monday, dates[6] as string)}
+            <span className="muted sub">{isoWeek}</span>
           </h1>
           <Button aria-label="Next week" onClick={() => navigate(`/week/${nextWeek}`)}>
             <span aria-hidden="true">&gt;</span>
@@ -228,13 +223,10 @@ export function Week() {
           </p>
         )}
         {summary && (
-          <p className="compliance" aria-label="Week compliance">
-            {summary.main}
-            {runMinutes !== undefined && `, run ${Math.round(runMinutes)} min`}
-            {summary.bonus && <span className="tag">{summary.bonus}</span>}
+          <p className="week-line" aria-label="This week so far">
+            {summary}
           </p>
         )}
-        <Streaks today={today} />
       </header>
 
       <div className="week-days" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
@@ -247,32 +239,34 @@ export function Week() {
             sessions={sessions.filter((s) => s.date === date)}
             events={(events.data ?? []).filter((e) => e.date === date)}
             isToday={date === today}
+            isPast={isoWeek === thisWeek && date < today}
             open={isOpen(date)}
-            onToggle={
-              desktop ? undefined : () => setToggled((t) => ({ ...t, [date]: !isOpen(date) }))
+            onToggle={() => setToggled((t) => ({ ...t, [date]: !isOpen(date) }))}
+            after={
+              date === today &&
+              checkin.data &&
+              habits.data &&
+              !lastWeight.isLoading && (
+                <CheckinCard
+                  checkin={checkin.data}
+                  habits={habits.data}
+                  lastWeight={lastWeight.data ?? null}
+                  onSave={(changes) => saveCheckin.mutate(changes)}
+                />
+              )
             }
           >
             {date === tomorrow && kitBanner}
             {date === today && (
-              <>
-                <PromptsStrip
-                  prompts={prompts}
-                  onDone={(key) => saveCheckin.mutate({ habits: { [key]: true } })}
-                  onDismiss={(key) =>
-                    saveCheckin.mutate({
-                      dismissed_prompts: [...(checkin.data?.dismissed_prompts ?? []), key],
-                    })
-                  }
-                />
-                {checkin.data && habits.data && !lastWeight.isLoading && (
-                  <CheckinCard
-                    checkin={checkin.data}
-                    habits={habits.data}
-                    lastWeight={lastWeight.data ?? null}
-                    onSave={(changes) => saveCheckin.mutate(changes)}
-                  />
-                )}
-              </>
+              <PromptsStrip
+                prompts={prompts}
+                onDone={(key) => saveCheckin.mutate({ habits: { [key]: true } })}
+                onDismiss={(key) =>
+                  saveCheckin.mutate({
+                    dismissed_prompts: [...(checkin.data?.dismissed_prompts ?? []), key],
+                  })
+                }
+              />
             )}
           </DayRow>
         ))}

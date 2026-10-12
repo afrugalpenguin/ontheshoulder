@@ -142,21 +142,50 @@ export function nextUpText(event: Event, today: string): string {
   return `Next up: ${event.name} ${when}`;
 }
 
-/** The week so far in one short line. Sunday is reported apart and never as a failure. */
-export function complianceText(c: Compliance): { main: string; bonus: string | null } {
+/** "6 to 12 Jan", or "27 Jan to 2 Feb" when the week crosses a month. */
+export function dateRange(from: string, to: string): string {
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+  return `${sameMonth ? Number(from.slice(8)) : shortDate(from)} to ${shortDate(to)}`;
+}
+
+export interface WeekLineExtras {
+  /** Minutes run so far this week. */
+  runMinutes?: number | undefined;
+  /** Complete weeks in a row. */
+  weeks?: number | null;
+  /** Weekday mornings in a row; `capped` when the run may be longer than what was loaded. */
+  mornings?: { days: number; capped: boolean } | null;
+}
+
+/**
+ * The week in one line: compliance, run minutes and streaks, for example
+ * "Key sessions 1 of 3 · mornings 2 of 4 · run 45 min · 3 weeks in a row".
+ * A part with nothing to say yet is left out: no count of zero, no streak of
+ * zero, and nothing about an optional session that has not been done. Null
+ * when no part is left.
+ */
+export function weekLine(c: Compliance, extras: WeekLineExtras = {}): string | null {
   const parts: string[] = [];
-  if (c.required.length > 0) {
-    const met = c.required.filter((r) => r.met).length;
-    parts.push(`key sessions ${met} of ${c.required.length}`);
-  }
-  if (c.treadmill.days_needed > 0) {
+  const met = c.required.filter((r) => r.met).length;
+  if (met > 0) parts.push(`key sessions ${met} of ${c.required.length}`);
+  if (c.treadmill.days_needed > 0 && c.treadmill.days_done > 0) {
     parts.push(`mornings ${c.treadmill.days_done} of ${c.treadmill.days_needed}`);
   }
-  if (parts.length === 0) parts.push(`${c.sessions_done} of ${c.sessions_planned} sessions`);
-  const main = `${c.complete ? 'Complete' : 'So far'}: ${parts.join(', ')}`;
-  const bonus =
-    c.optional_planned === 0 ? null : c.optional_done > 0 ? 'Bonus done' : 'Bonus: not this week';
-  return { main, bonus };
+  // A block with no compliance rule gets a plain count.
+  if (c.required.length === 0 && c.treadmill.days_needed === 0 && c.sessions_done > 0) {
+    parts.push(`${c.sessions_done} of ${c.sessions_planned} sessions`);
+  }
+  const run = Math.round(extras.runMinutes ?? 0);
+  if (run > 0) parts.push(`run ${run} min`);
+  if (c.optional_done > 0) parts.push('bonus done');
+  if (extras.weeks) parts.push(`${plural(extras.weeks, 'week')} in a row`);
+  if (extras.mornings && extras.mornings.days > 0) {
+    const { days, capped } = extras.mornings;
+    parts.push(`${days}${capped ? '+' : ''} ${days === 1 ? 'morning' : 'mornings'} in a row`);
+  }
+  if (parts.length === 0) return null;
+  const line = parts.join(' · ');
+  return line.charAt(0).toUpperCase() + line.slice(1);
 }
 
 /** Local time of day as HH:MM. */

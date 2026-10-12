@@ -26,6 +26,7 @@
   --hair: 1px;
   --thick: 3px;
   --page: 34rem;
+  --page-week: 30rem;
   --page-wide: 96rem;
   --panel: 22rem;
   --motion: 180ms;
@@ -145,11 +146,7 @@ h3 {
   font-weight: 600;
 }
 
-.compliance {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
+.week-line {
   font-size: var(--text-sm);
 }
 
@@ -790,31 +787,16 @@ details[open] > summary {
   border: var(--hair) solid var(--accent);
 }
 
-/* Week: a list of day rows on a phone, seven columns on a desktop. */
+/* Week: a list of day rows in one centred column, the same at every width. */
+
+main.week {
+  max-width: var(--page-week);
+}
 
 .week-head {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-}
-
-.streaks {
-  display: flex;
-  gap: var(--space-4);
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted);
-}
-
-.streaks div {
-  display: flex;
-  gap: var(--space-1);
-}
-
-.streaks dd {
-  margin: 0;
-  color: var(--fg);
-  font-weight: 700;
 }
 
 .week-days {
@@ -872,24 +854,19 @@ details[open] > summary {
   border-color: var(--accent);
 }
 
+/* The check-in folded to one line once the day's weight is in. */
+.checkin-line {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0 var(--space-3);
+  font-weight: 500;
+  text-align: left;
+  color: var(--muted);
+}
+
 @media (min-width: 900px) {
   main.wide {
     max-width: var(--page-wide);
-  }
-
-  .week-days {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    align-items: start;
-  }
-
-  .week-days .session-head {
-    flex-wrap: wrap;
-  }
-
-  .week-days .actions {
-    flex-direction: column;
-    align-items: stretch;
   }
 
   /* On a desktop a sheet is a dialog in the middle of the screen. */
@@ -1264,6 +1241,10 @@ main.has-rest-bar {
   justify-content: space-between;
   font-size: var(--text-sm);
   color: var(--muted);
+}
+
+.week-cell.is-empty {
+  border-color: transparent;
 }
 
 .week-cell.is-complete {
