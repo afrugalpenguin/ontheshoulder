@@ -10,6 +10,18 @@ export function ensureWeekPlan(db: Db, isoWeek: string): number {
   return db.insert(week_plan).values({ iso_week: isoWeek }).returning().get().id;
 }
 
+type Row = { session: { date: string; slot: string }; template: { kind: string } };
+
+/**
+ * Within a day and slot, prehab comes first: it is done before the session it
+ * shares the slot with. The sort is stable, so everything else keeps the order
+ * it was read in.
+ */
+function byDayOrder(a: Row, b: Row): number {
+  if (a.session.date !== b.session.date || a.session.slot !== b.session.slot) return 0;
+  return Number(b.template.kind === 'prehab') - Number(a.template.kind === 'prehab');
+}
+
 /** The week as the api returns it. A week with no plan yet has no sessions. */
 export function loadWeek(db: Db, isoWeek: string): Week {
   const start = isoWeekStart(isoWeek);
@@ -29,7 +41,7 @@ export function loadWeek(db: Db, isoWeek: string): Week {
     end_date: addDays(start, 6),
     generated_at: plan?.generated_at ?? null,
     reasoning: plan?.reasoning ?? [],
-    sessions: rows.map(({ session, template }) => ({
+    sessions: [...rows].sort(byDayOrder).map(({ session, template }) => ({
       ...session,
       template: {
         key: template.key,

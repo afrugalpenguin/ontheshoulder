@@ -110,7 +110,12 @@ describe('starter template', () => {
     const res = await t.call<StarterTemplate[]>('GET', '/templates/starters');
     expect(res.body).toHaveLength(1);
     expect(res.body[0]).toMatchObject({ name: 'rebuild-100', weeks: 10 });
-    expect(res.body[0]?.week).toHaveLength(10);
+    expect(res.body[0]?.week).toHaveLength(12);
+    // Prehab is listed before the session it shares the morning with.
+    expect(res.body[0]?.week.filter((f) => f.weekday === 2).map((f) => f.template)).toEqual([
+      'Prehab',
+      'Midweek run',
+    ]);
     expect(res.body[0]?.week).toContainEqual({
       weekday: 7,
       slot: 'am',
@@ -131,11 +136,11 @@ describe('starter template', () => {
       exercises: 24,
       programme_days: 2,
       programme_slots: 12,
-      session_templates: 10,
-      fixtures: 10,
+      session_templates: 11,
+      fixtures: 12,
       blocks: 1,
     });
-    expect(first.body.changes).toBe(64);
+    expect(first.body.changes).toBe(67);
 
     const second = await fresh.call<ApplyTemplateResult>(
       'POST',
@@ -149,6 +154,61 @@ describe('starter template', () => {
     await fresh.close();
   });
 
+  it('on an install from before prehab was a session, adds the template and its two days and nothing else', async () => {
+    const old = await makeApp();
+    await old.call('POST', '/setup/apply-template/rebuild-100', { start_date: '2031-01-06' });
+    // Put the install back to how the earlier template left it: no prehab
+    // template, and a week the user has since rearranged.
+    type Row = {
+      id: number;
+      key: string | null;
+      weekday: number;
+      slot: string;
+      template_id: number;
+    };
+    const templates = (await old.call<Row[]>('GET', '/session-templates')).body;
+    const prehab = templates.find((t) => t.key === 'prehab') as Row;
+    const swim = templates.find((t) => t.key === 'swim') as Row;
+    const fixtures = (await old.call<Row[]>('GET', '/fixtures')).body;
+    const kept = fixtures.filter((f) => f.template_id !== prehab.id && f.template_id !== swim.id);
+    await old.call('PUT', '/fixtures', {
+      fixtures: kept.map(({ weekday, slot, template_id }) => ({ weekday, slot, template_id })),
+    });
+    expect((await old.call('DELETE', `/session-templates/${prehab.id}`)).status).toBe(204);
+
+    const applied = await old.call<ApplyTemplateResult>(
+      'POST',
+      '/setup/apply-template/rebuild-100',
+    );
+    expect(applied.body.created).toEqual({
+      habits: 0,
+      exercises: 0,
+      programme_days: 0,
+      programme_slots: 0,
+      session_templates: 1,
+      fixtures: 2,
+      blocks: 0,
+    });
+    const after = (await old.call<Row[]>('GET', '/fixtures')).body;
+    const added = (await old.call<Row[]>('GET', '/session-templates')).body.find(
+      (t) => t.key === 'prehab',
+    ) as Row;
+    expect(after.filter((f) => f.template_id === added.id).map((f) => [f.weekday, f.slot])).toEqual(
+      [
+        [2, 'am'],
+        [5, 'am'],
+      ],
+    );
+    // The swim the user took off the week is not put back.
+    expect(after.some((f) => f.template_id === swim.id)).toBe(false);
+    expect(after).toHaveLength(kept.length + 2);
+
+    // Applying again adds prehab once, not twice.
+    const again = await old.call<ApplyTemplateResult>('POST', '/setup/apply-template/rebuild-100');
+    expect(again.body.changes).toBe(0);
+    await old.close();
+  });
+
   it('seeds the protein prompt and no athlete, events, kit or loads', async () => {
     const habits = await t.call<Habit[]>('GET', '/habits');
     expect(habits.body.map((h) => h.key)).toEqual([
@@ -160,7 +220,19 @@ describe('starter template', () => {
     ]);
     expect(habits.body[3]).toMatchObject({ prompt_text: 'Oi. Protein.', prompt_until: '12:00' });
     // Finishing a walk counts as the treadmill morning, so its habit is seeded off.
-    expect(habits.body.filter((h) => !h.enabled).map((h) => h.key)).toEqual(['treadmill_done']);
+    // and prehab is a session card with its own Done, so its habit is off too.
+    expect(habits.body.filter((h) => !h.enabled).map((h) => h.key)).toEqual([
+      'treadmill_done',
+      'prehab_done',
+    ]);
+    // Alcohol is two answers, asked Tuesday to Friday about the night before.
+    expect(habits.body[1]).toMatchObject({
+      key: 'alcohol_free',
+      label: 'Last night',
+      answer_labels: ['Alcohol-free', 'Had a drink'],
+      weekdays: [2, 3, 4, 5],
+    });
+    expect(habits.body[3]).toMatchObject({ weekdays: null, answer_labels: null });
 
     const fresh = await makeApp();
     await fresh.call('POST', '/setup/apply-template/rebuild-100');

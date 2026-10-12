@@ -36,6 +36,10 @@ export function describeStarter(template: StarterTemplateData): StarterTemplate 
  * Loads a starter template. Every row is looked up by its natural key first and
  * only inserted when missing, so a second apply reports zero changes and never
  * overwrites what the user has edited since.
+ *
+ * On an install that already has a week (any fixture), only session templates
+ * created by this apply are put on their days. So a newer version of a template
+ * adds what is new, and a week the user has rearranged is left as it is.
  */
 export function applyTemplate(
   db: Db,
@@ -63,6 +67,8 @@ export function applyTemplate(
           prompt_text: h.prompt_text ?? null,
           prompt_until: h.prompt_until ?? null,
           enabled: h.enabled ?? true,
+          weekdays: h.weekdays ?? null,
+          answer_labels: h.answer_labels ?? null,
         })
         .run();
       created.habits++;
@@ -119,6 +125,8 @@ export function applyTemplate(
       dayIds.set(d.name, day.id);
     }
 
+    const hadWeek = tx.select().from(fixture).get() !== undefined;
+    const newTemplates = new Set<string>();
     const templateIds = new Map<string, number>();
     for (const t of template.session_templates) {
       let row = tx.select().from(session_template).where(eq(session_template.key, t.key)).get();
@@ -138,6 +146,7 @@ export function applyTemplate(
           .returning()
           .get();
         created.session_templates++;
+        newTemplates.add(t.key);
       }
       templateIds.set(t.key, row.id);
     }
@@ -147,6 +156,7 @@ export function applyTemplate(
       if (templateId === undefined) {
         throw new Error(`template ${template.name}: unknown fixture template ${f.template}`);
       }
+      if (hadWeek && !newTemplates.has(f.template)) continue;
       const found = tx
         .select()
         .from(fixture)

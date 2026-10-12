@@ -37,6 +37,7 @@ const idOf = (key: string) => rebuild100.session_templates.findIndex((t) => t.ke
 const MIDWEEK = idOf('midweek_run');
 const LONG = idOf('long_run');
 const VEST = idOf('vest_walk');
+const PREHAB = idOf('prehab');
 
 const input = (over: Partial<GenerateInput> = {}): GenerateInput => ({
   isoWeek: '2031-W02',
@@ -155,11 +156,13 @@ describe('generateWeek: fixtures, optional flag and vest', () => {
       ['2031-01-06', 'am', VEST],
       ['2031-01-06', 'pm', idOf('long_ride')],
       ['2031-01-07', 'am', MIDWEEK],
+      ['2031-01-07', 'am', PREHAB],
       ['2031-01-08', 'am', VEST],
       ['2031-01-08', 'pm', idOf('strength_a')],
       ['2031-01-09', 'am', VEST],
       ['2031-01-09', 'pm', idOf('swim')],
       ['2031-01-10', 'am', idOf('treadmill_walk')],
+      ['2031-01-10', 'am', PREHAB],
       ['2031-01-10', 'pm', idOf('strength_b')],
       ['2031-01-12', 'am', LONG],
     ]);
@@ -249,7 +252,7 @@ describe('regeneration preserves edits and linked sessions', () => {
   it('refreshes untouched planned sessions in place and creates nothing', () => {
     const again = generateWeek(input({ existing: existing() }));
     expect(again.create).toEqual([]);
-    expect(again.update.map((s) => s.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(again.update.map((s) => s.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
     expect(again.remove).toEqual([]);
   });
 
@@ -274,7 +277,7 @@ describe('regeneration preserves edits and linked sessions', () => {
         }),
       }),
     );
-    expect(again.keep.sort()).toEqual([1, 10]);
+    expect(again.keep.sort((a, b) => a - b)).toEqual([1, 12]);
     expect(again.remove).toEqual([]);
     expect(again.reasoning).toContain('Vest walk on 2031-01-06: kept, it has a logged activity.');
     expect(again.reasoning).toContain('Long run on 2031-01-12: kept, it is marked skipped.');
@@ -306,7 +309,7 @@ describe('regeneration preserves edits and linked sessions', () => {
       }),
     );
     expect(again.remove).toEqual([2]);
-    expect(again.keep).toEqual([7]);
+    expect(again.keep).toEqual([8]);
   });
 });
 

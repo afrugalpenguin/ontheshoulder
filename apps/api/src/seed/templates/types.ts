@@ -23,6 +23,10 @@ export interface StarterTemplateData {
     prompt_until?: string;
     /** False for a habit kept for its history but no longer asked. */
     enabled?: boolean;
+    /** ISO weekdays it is asked on; every day when left out. */
+    weekdays?: number[];
+    /** [yes, no] makes it a two-answer habit instead of a tick. */
+    answer_labels?: [string, string];
   }[];
   exercises: {
     name: string;

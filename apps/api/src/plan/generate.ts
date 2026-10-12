@@ -156,7 +156,10 @@ export function generateWeekPlan(
 
 export function weekCompliance(db: Db, isoWeek: string): Compliance {
   const { rules } = rulesForDate(db, isoWeekStart(isoWeek));
-  const sessions = loadWeek(db, isoWeek).sessions.map((s) => ({
+  // Prehab is not a session the week is judged on: it never counts as a
+  // treadmill morning or towards the session totals.
+  const counted = loadWeek(db, isoWeek).sessions.filter((s) => s.template.kind !== 'prehab');
+  const sessions = counted.map((s) => ({
     date: s.date,
     slot: s.slot,
     status: s.status,
