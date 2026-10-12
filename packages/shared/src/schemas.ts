@@ -126,6 +126,19 @@ export const HabitInput = Type.Object({
   prompt_text: OptNull(Name),
   prompt_until: OptNull(TimeOfDay),
   enabled: Opt(Type.Boolean()),
+  /** ISO weekdays (1 Monday to 7 Sunday) the habit is asked on; null means every day. */
+  weekdays: OptNull(
+    Type.Array(Type.Integer({ minimum: 1, maximum: 7 }), {
+      minItems: 1,
+      maxItems: 7,
+      uniqueItems: true,
+    }),
+  ),
+  /**
+   * A pair of answers, [yes, no]. With labels the habit is a two-button choice
+   * that saves true for the first and false for the second; without, a tick.
+   */
+  answer_labels: OptNull(Type.Tuple([Name, Name])),
 });
 export const Habit = row(HabitInput);
 
@@ -155,6 +168,10 @@ export const SessionStructure = Type.Object({
   /** A time box: go out for between min_min and max_min minutes, at any pace. */
   min_min: Opt(Count),
   max_min: Opt(Count),
+  /** A routine shown on the card: what to do and how much of it. */
+  exercises: Opt(
+    Type.Array(Type.Object({ name: Name, dose: Name }), { minItems: 1, maxItems: 30 }),
+  ),
 });
 
 export const SessionTemplateInput = Type.Object({
@@ -428,6 +445,18 @@ export const TrendWeek = Type.Object({
   run_rpe_mean: Nullable(Type.Number()),
   /** Heaviest working weight that week for each main lift (slots on the linear rule), by exercise name. */
   lifts: Type.Record(Type.String(), Type.Number()),
+  /**
+   * For each two-answer habit, by key: the dates in the week it is asked on,
+   * and how many of those have each answer. A date with neither is unanswered.
+   */
+  habit_answers: Type.Record(
+    Type.String(),
+    Type.Object({
+      dates: Type.Array(IsoDate),
+      yes: Type.Integer(),
+      no: Type.Integer(),
+    }),
+  ),
 });
 
 export const TrendDay = Type.Object({

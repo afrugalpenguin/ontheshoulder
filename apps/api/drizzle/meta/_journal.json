@@ -36,6 +36,13 @@
       "when": 1791809557768,
       "tag": "0004_disable_treadmill_habit",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1791810557732,
+      "tag": "0005_habit_days",
+      "breakpoints": true
     }
   ]
 }

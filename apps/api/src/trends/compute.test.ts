@@ -80,6 +80,7 @@ describe('weeklyTrends', () => {
       run_rpe_mean: 5.5,
       // Heaviest set of each main lift that week.
       lifts: { 'Back squat': 62.5, Deadlift: 80 },
+      habit_answers: {},
     });
   });
 
@@ -97,6 +98,7 @@ describe('weeklyTrends', () => {
       ankle_mean: null,
       run_rpe_mean: null,
       lifts: { 'Back squat': 65 },
+      habit_answers: {},
     });
   });
 
@@ -156,5 +158,44 @@ describe('dailyTrends', () => {
     });
     expect(days[0]).toMatchObject({ weight_kg: 72, run_rpe: null });
     expect(days[6]).toMatchObject({ run_rpe: 7, sleep_quality: null });
+  });
+});
+
+describe('weeklyTrends: two-answer habits', () => {
+  const weeknights = { key: 'alcohol_free', weekdays: [2, 3, 4, 5] };
+  const checkin = (date: string, habits: Record<string, boolean>): CheckinRow => ({
+    date,
+    sleep_quality: null,
+    energy: null,
+    weight_kg: null,
+    ankle_score: null,
+    habits,
+  });
+  const [week] = weeklyTrends(['2031-W02'], {
+    activities: [],
+    lifts: [],
+    compliance,
+    answerHabits: [weeknights, { key: 'every_day', weekdays: null }],
+    checkins: [
+      // Monday is not an asked day, so an answer saved on it is not counted.
+      checkin('2031-01-06', { alcohol_free: false }),
+      checkin('2031-01-07', { alcohol_free: true, every_day: true }),
+      checkin('2031-01-08', { alcohol_free: false }),
+      // Thursday has a check-in with no answer, Friday has no check-in at all.
+      checkin('2031-01-09', { protein_shake: true }),
+    ],
+  });
+
+  it('counts each answer on the asked days and leaves the rest unanswered', () => {
+    expect(week?.habit_answers.alcohol_free).toEqual({
+      dates: ['2031-01-07', '2031-01-08', '2031-01-09', '2031-01-10'],
+      yes: 1,
+      no: 1,
+    });
+  });
+
+  it('a habit with no days is asked every day of the week', () => {
+    expect(week?.habit_answers.every_day).toMatchObject({ yes: 1, no: 0 });
+    expect(week?.habit_answers.every_day?.dates).toHaveLength(7);
   });
 });

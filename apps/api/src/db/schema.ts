@@ -66,6 +66,10 @@ export const habit_definition = sqliteTable('habit_definition', {
   prompt_text: text('prompt_text'),
   prompt_until: text('prompt_until'),
   enabled: bool('enabled').notNull().default(true),
+  // ISO weekdays the habit is asked on; null is every day.
+  weekdays: json<number[]>('weekdays'),
+  // [yes, no] for a two-answer habit; null for a tick.
+  answer_labels: json<[string, string]>('answer_labels'),
 });
 
 // 5.4 Strength (declared before the plan tables that reference it)
